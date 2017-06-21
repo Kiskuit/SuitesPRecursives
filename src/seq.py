@@ -87,118 +87,139 @@ from ore_algebra import *
 
 
 
-class PRecSequence(object):
+class PRecSequence(RingElement):
     """
     TODO doc
     """
+    # TODO Globally change members name to _name, so i can use getters called name
 
-    def __init__(self, cond=None, annihilator=None, const=None,Ore = None):
+    def __init__ (self, parent, condInit, annihilator):
         """
-        TODO doc
-        cond : initial condition of the Sequence
-        annihilator : Recurence of the Sequence
-        const : single value for a constant Sequence
-        Ore : in the case of guessing, provide the Ore operator
         """
-        # print(cond,annihilator,const,Ore)
-        # i is used for the iterator
-        self.i = -1
-        # TODO : use @classmethod instead?
 
-        if const:
-            if cond or annihilator:
-                raise Exception("Constant sequences must be initialized only with its constant value.")
-            cond = [const]
-            A,n = ZZ['n'].objgen()
+        #self.parent = parent
 
-            R,Sn = OreAlgebra(A,'Sn').objgen()
-            annihilator = Sn - 1
-            # TODO in case of addition u_n + const, use this part of the constructor
-           
-        data = []
-        if (type(cond) == list or type(cond) == Sequence): # The argument is a list
-             data = cond
-             self.cond_init = {i:cond[i] for i in range(len(cond))}
-             
-        elif (type(cond) == dict): # The argument is a dict
-            self.cond_init = cond.copy()
-        else:
-            raise TypeError("Illegal initial value object")
+        # type checking via duck typing
+        # TODO check if this enough
+        try :
+            self.i = condInit.keys()[0]
+            self.cond = condInit.copy()
+        except AttributeError : # condInit is not a dict
+            try :
+                self.cond = {i:val for i,val in enumerate(a)}
+                self.i = 0
+            except : # condInit is not a list either
+                raise ValueError ("condInit must be a list or a dict")
         
-
-        #guess the annihilator 
-        if(cond and not annihilator):
-            #need a list with concective element
-            if not data:
-                raise Exception("for guessing a Sequence cond must be a list or a Sequence")
-            if not Ore:
-                #construct an good Ore?
-                raise Exception("missing argument Ore")
-            if not Ore.is_S():
-                raise Exception("You don't use the Shift operator in OreAlgebra")
-            annihilator = -guess(data,Ore)
-
-
-
-        # verification des indices de la suite
-        if (Sequence(self.cond_init.keys(), use_sage_types=True).universe()
-                != ZZ) :
-            raise TypeError("Indices of the sequence must be integers")
-
-        # sauvegarde de l'annihilateur de la suite
         self.annihilator = annihilator
-        # sauvegarde de l'ordre de la recurence
-        self.order = annihilator.order()
-        # récuperation de l'anneau des coeficient
-        self.base_ring = annihilator.base_ring()
+        print (annihilator, parent.base_ring())
+        #if annihilator not in parent.base_ring():
+        #    raise ValueError("`annihilator` must be in {}.".format(parent.base_ring()))
+        order = annihilator.order()
+        if len (condInit) < order : 
+            raise ValueError ("Not enough initial conditions")
 
-        # récuperation de l'operateur de récurence
-        self.gen = annihilator.parent().gen()
-        # Récupération du parent
-        self.parent = annihilator.parent()
+        RingElement.__init__(self, parent)
 
-        # Check if there are enough initial conditions
-        l = len (self.cond_init)
-        if l < self.order : 
-            err_string = "Not enough initial conditions."
-            err_string += "Please provide at least " + order + "conditions"
-            err_string += "(Only "+l+"provided)."
-            raise Exception (err_string)
-            # TODO check if param l were used when catching excn
 
-        # print(self.cond_init)
+###       def __init__(self, cond=None, annihilator=None, const=None,Ore = None):
+###           """
+###           TODO doc
+###           cond : initial condition of the Sequence
+###           annihilator : Recurence of the Sequence
+###           const : single value for a constant Sequence
+###           Ore : in the case of guessing, provide the Ore operator
+###           """
+###           # print(cond,annihilator,const,Ore)
+###           # i is used for the iterator
+###           self.i = -1
+###           # TODO : use @classmethod instead?
+###   
+###           if const:
+###               if cond or annihilator:
+###                   raise Exception("Constant sequences must be initialized only with its constant value.")
+###               cond = [const]
+###               A,n = ZZ['n'].objgen()
+###   
+###               R,Sn = OreAlgebra(A,'Sn').objgen()
+###               annihilator = Sn - 1
+###               # TODO in case of addition u_n + const, use this part of the constructor
+###              
+###           data = []
+###           if (type(cond) == list or type(cond) == Sequence): # The argument is a list
+###                data = cond
+###                self.cond_init = {i:cond[i] for i in range(len(cond))}
+###                
+###           elif (type(cond) == dict): # The argument is a dict
+###               self.cond_init = cond.copy()
+###           else:
+###               raise TypeError("Illegal initial value object")
+###           
+###   
+###           #guess the annihilator 
+###           if(cond and not annihilator):
+###               #need a list with concective element
+###               if not data:
+###                   raise Exception("for guessing a Sequence cond must be a list or a Sequence")
+###               if not Ore:
+###                   #construct an good Ore?
+###                   raise Exception("missing argument Ore")
+###               if not Ore.is_S():
+###                   raise Exception("You don't use the Shift operator in OreAlgebra")
+###               annihilator = -guess(data,Ore)
+###   
+###   
+###   
+###           # verification des indices de la suite
+###           if (Sequence(self.cond_init.keys(), use_sage_types=True).universe()
+###                   != ZZ) :
+###               raise TypeError("Indices of the sequence must be integers")
+###   
+###           # sauvegarde de l'annihilateur de la suite
+###           self.annihilator = annihilator
+###           # sauvegarde de l'ordre de la recurence
+###           self.order = annihilator.order()
+###           # récuperation de l'anneau des coeficient
+###           self.base_ring = annihilator.base_ring()
+###   
+###           # récuperation de l'operateur de récurence
+###           self.gen = annihilator.parent().gen()
+###           # Récupération du parent
+###           self.parent = annihilator.parent()
+###   
+###           # Check if there are enough initial conditions
+###           l = len (self.cond_init)
+###           if l < self.order : 
+###               err_string = "Not enough initial conditions."
+###               err_string += "Please provide at least " + order + "conditions"
+###               err_string += "(Only "+l+"provided)."
+###               raise Exception (err_string)
+###               # TODO check if param l were used when catching excn
+###   
+###           # print(self.cond_init)
 
-    def _element_constuctor_(self,x):
-        return PRecSequence(const = x)
+###       def _element_constuctor_(self,x):
+###           return PRecSequence(const = x)
+###   
+###       def _coerce_map_from_(self,S):
+###           if S in RR:
+###               return True
+###           if S in PRecSequence:
+###               return True
+###           return False
+###   
+###       def _mycoerce_(self,S):
+###           if S in RR:
+###               return PRecSequence(const = S)
+###           if isinstance(S,PRecSequence):
+###               return S
+###           return None
 
-    def _coerce_map_from_(self,S):
-        if S in RR:
-            return True
-        if S in PRecSequence:
-            return True
-        return False
-
-    def _mycoerce_(self,S):
-        if S in RR:
-            return PRecSequence(const = S)
-        if isinstance(S,PRecSequence):
-            return S
-        return None
-
-    #a ne pas surcharger normalement
-    # def __call__(self,x):
-    #     if(isinstance(x,PRecSequence)):
-    #         return x
-    #     if(self._coerce_map_from_(x)):
-    #         return self._element_constuctor_(x)
-    #     return None
 
     def __iter__(self):
         return self
 
     def next(self):
-        # self.iterator = self.annihilator.to_list(self.iterator,self.order+1)[1:]
-        # return self.iterator[-1]  
         self.i += 1
         return (self[self.i])[0]
 
@@ -272,82 +293,150 @@ class PRecSequence(object):
         return ret
 
 
-    def __add__(self,other):
-        #find annihilator for the add
+    def _add_ (self, other):
+        """
+        """
+        # TODO add cond init in case of discrepancy
 
-        # >>> La conversion forcée de other.annihilator dans self.R est un peu
-        # violente. Il vaut probablement mieux déclencher une erreur si les
-        # deux annulateurs n'ont pas le même parent, ou à la rigueur utiliser
-        # self.R.coerce().
-        # TODO
-        # (R est devenu parent depuis)
-        # TODO test that!
-        # if isinstance(other in QQ : # LHS is a constant integer
-        if other in RR:
-            other = self._mycoerce_(other)
-        if not isinstance(other,PRecSequence):
-            raise TypeError ("LHS and RHS must have the same parent.")
-        # TODO add other constant (rational, real, complex?...)
-        # try:
-        # if not self.parent.has_coerce_map_from(other.parent): 
-        # except:
-        #     print(other.parent)
-        #     print(self.parent)
-        #     raise TypeError("Can't do the addition")
+        _class = self.__class__
+        # Compute new annihilator
+        sum_annihilator = self.annihilator.lclm(other.annihilator)
+        # Compute initial conditions
+        _min = min(self.cond.keys()[0], other.cond.keys()[0])
+        sum_cond = {}
+        for i in range(_min, _min + sum_annihilator.order()):
+            sum_cond[i] = self[i] + other[i]
 
-        new_annihilator = self.annihilator.lclm(self.parent(other.annihilator))
+        return _class(self.parent(), sum_cond, sum_annihilator)
+            
+    def _sub_ (self, other):
+        """
+        """
+        # TODO add cond init in case of discrepancy
 
-        #find degenerative case
-        try:
-            needed_root = new_annihilator[order(new_annihilator)].roots()
-        except AttributeError:
-            needed_root = []
+        _class = self.__class__
+        # Compute new annihilator
+        sub_annihilator = self.annihilator.lclm(other.annihilator)
+        # Compute initial conditions
+        _min = min(self.cond.keys()[0], other.cond.keys()[0])
+        sub_cond = {}
+        for i in range(_min, _min + sub_annihilator.order()):
+            sub_cond[i] = self[i] - other[i]
 
-        #max between order and the bigest root in ZZ
-        len_cond  = max(new_annihilator.order()+1,
-                        max([0] + [elt[0]+new_annihilator.order()+1 for elt in needed_root if(elt[0].parent() == ZZ 
-                                                                                        and elt >= 0 )]))
+        return _class(self.parent(), sub_cond, sub_annihilator)
+            
+###       def __add__(self,other):
+###           #find annihilator for the add
+###   
+###           # >>> La conversion forcée de other.annihilator dans self.R est un peu
+###           # violente. Il vaut probablement mieux déclencher une erreur si les
+###           # deux annulateurs n'ont pas le même parent, ou à la rigueur utiliser
+###           # self.R.coerce().
+###           # TODO
+###           # (R est devenu parent depuis)
+###           # TODO test that!
+###           # if isinstance(other in QQ : # LHS is a constant integer
+###           if other in RR:
+###               other = self._mycoerce_(other)
+###           if not isinstance(other,PRecSequence):
+###               raise TypeError ("LHS and RHS must have the same parent.")
+###           # TODO add other constant (rational, real, complex?...)
+###           # try:
+###           # if not self.parent.has_coerce_map_from(other.parent): 
+###           # except:
+###           #     print(other.parent)
+###           #     print(self.parent)
+###           #     raise TypeError("Can't do the addition")
+###   
+###           new_annihilator = self.annihilator.lclm(self.parent(other.annihilator))
+###   
+###           #find degenerative case
+###           try:
+###               needed_root = new_annihilator[order(new_annihilator)].roots()
+###           except AttributeError:
+###               needed_root = []
+###   
+###           #max between order and the bigest root in ZZ
+###           len_cond  = max(new_annihilator.order()+1,
+###                           max([0] + [elt[0]+new_annihilator.order()+1 for elt in needed_root if(elt[0].parent() == ZZ 
+###                                                                                           and elt >= 0 )]))
+###   
+###   
+###           #a rework is needed here
+###           #compute enough value add Sequence
+###           cond1 = self.to_list(max(len_cond,order(new_annihilator),len(self.cond_init.keys()) ))
+###           cond2 = other.to_list(max(len_cond,order(new_annihilator),len(other.cond_init.keys())))
+###   
+###   
+###           new_cond = [sum(x) for x in zip(cond1, cond2)]
+###   
+###           return PRecSequence(new_cond,new_annihilator)
 
+    def _mul_ (self, other):
+        """
+        """
+        #TODO add cond in case of discrepancy
 
-        #a rework is needed here
-        #compute enough value add Sequence
-        cond1 = self.to_list(max(len_cond,order(new_annihilator),len(self.cond_init.keys()) ))
-        cond2 = other.to_list(max(len_cond,order(new_annihilator),len(other.cond_init.keys())))
+        _class = self.__class__
+        # Compute new annihilator
+        prod_annihilator = self.annihilator.symmetric_product(other.annihilator)
+        # Compute new init cond
+        prod_cond = {}
+        _min = min(self.cond.keys()[0], other.cond.keys()[0])
+        for i in range(_min, _min+prod_annihilator.order()):
+            prod_cond[i] = self[i] * other[i]
 
+        return _class (self.parent(), prod_cond, prod_annihilator)
 
-        new_cond = [sum(x) for x in zip(cond1, cond2)]
+###       def __mul__(self,other):
+###           if other in RR:
+###               other = self._mycoerce_(other)
+###           if not isinstance(other,PRecSequence):
+###               raise TypeError ("LHS and RHS must have the same parent.")
+###   
+###   
+###           new_annihilator = self.annihilator.symmetric_product(self.parent(other.annihilator))
+###   
+###           #find degenerative case
+###           try:
+###               needed_root = new_annihilator[order(new_annihilator)].roots() # BIZARRE a demander au prof
+###           except AttributeError:
+###               #if no 
+###               needed_root = []
+###           #max between order and the bigest root in ZZ
+###           len_cond  = max(new_annihilator.order()+1,
+###                           max([0] + [elt[0]+new_annihilator.order()+1 for elt in needed_root if(elt[0].parent() == ZZ 
+###                                                                                           and elt >= 0 )]))
+###   
+###           #compute enough value mult Sequence
+###           cond1 = self.to_list(max(len_cond,order(new_annihilator),len(self.cond_init.keys()) ))
+###           cond2 = other.to_list(max(len_cond,order(new_annihilator),len(other.cond_init.keys())))
+###           
+###           new_cond = [x*y for x,y in zip(cond1, cond2)]
+###   
+###           return PRecSequence(new_cond,new_annihilator)
+    
+    def __eq__(self, other):
+        try :
+            sub = self - other
+        except :
+            # No comparison is implemented between the types of self & other
+            return NotImplemented
 
-        return PRecSequence(new_cond,new_annihilator)
-        # pass
+        if sub.is_const() and sub[sub.cond.keys()[0]]:
+            return True
+        return False
 
-    def __mul__(self,other):
-        if other in RR:
-            other = self._mycoerce_(other)
-        if not isinstance(other,PRecSequence):
-            raise TypeError ("LHS and RHS must have the same parent.")
+    def __ne__ (self, other):
+        ret = self == other
+        if ret == NotImplemented : 
+            return ret
+        return not self == other
 
+    # TODO
+    def _cmp_ (self, other):
+        raise NotImplementedError
 
-        new_annihilator = self.annihilator.symmetric_product(self.parent(other.annihilator))
-
-        #find degenerative case
-        try:
-            needed_root = new_annihilator[order(new_annihilator)].roots() # BIZARRE a demander au prof
-        except AttributeError:
-            #if no 
-            needed_root = []
-        #max between order and the bigest root in ZZ
-        len_cond  = max(new_annihilator.order()+1,
-                        max([0] + [elt[0]+new_annihilator.order()+1 for elt in needed_root if(elt[0].parent() == ZZ 
-                                                                                        and elt >= 0 )]))
-
-        #compute enough value mult Sequence
-        cond1 = self.to_list(max(len_cond,order(new_annihilator),len(self.cond_init.keys()) ))
-        cond2 = other.to_list(max(len_cond,order(new_annihilator),len(other.cond_init.keys())))
-        
-        new_cond = [x*y for x,y in zip(cond1, cond2)]
-
-        return PRecSequence(new_cond,new_annihilator)
-    #if this really work???
     def is_const(self):
         print(self.cond_init.values())
         for i in self.cond_init.values():
@@ -362,11 +451,12 @@ class PRecSequence(object):
         #if is const change self with a reduction????
 
         #------------------
+
         return True
-    def __repr__(self):
+    def _repr_(self):
         _str = "recurence : "+str(self.annihilator)+"\n"
         _str += "value : "+str(self.to_list(9))+" ...\n"
-        return "P-recurcive suite\n"+ _str
+        return "P-recursive sequence\n"+ _str
 
 
 ###################################################################
@@ -423,7 +513,6 @@ def ExprToSeq(expression):
 
 
 if __name__ == "__main__" :
-
 
     # algebre d'Ore en les variable Sn et n
     A,n = ZZ["n"].objgen()
