@@ -102,14 +102,13 @@ class PRecSequence(RingElement):
         # type checking via duck typing
         # TODO check if this enough
         try :
-            self.i = condInit.keys()[0]
             self.cond = condInit.copy()
         except AttributeError : # condInit is not a dict
             try :
-                self.cond = {i:val for i,val in enumerate(a)}
-                self.i = 0
+                self.cond = {i:val for i,val in enumerate(condInit)}
             except : # condInit is not a list either
                 raise ValueError ("condInit must be a list or a dict")
+        self.i = self.cond.keys()[0]
         
         if annihilator not in parent.ore_algebra():
             return ValueError("`annihilator must be in {}.".format(parent.ore_algebra()))
@@ -147,10 +146,10 @@ class PRecSequence(RingElement):
 ###           data = []
 ###           if (type(cond) == list or type(cond) == Sequence): # The argument is a list
 ###                data = cond
-###                self.cond_init = {i:cond[i] for i in range(len(cond))}
+###                self.cond = {i:cond[i] for i in range(len(cond))}
 ###                
 ###           elif (type(cond) == dict): # The argument is a dict
-###               self.cond_init = cond.copy()
+###               self.cond = cond.copy()
 ###           else:
 ###               raise TypeError("Illegal initial value object")
 ###           
@@ -170,7 +169,7 @@ class PRecSequence(RingElement):
 ###   
 ###   
 ###           # verification des indices de la suite
-###           if (Sequence(self.cond_init.keys(), use_sage_types=True).universe()
+###           if (Sequence(self.cond.keys(), use_sage_types=True).universe()
 ###                   != ZZ) :
 ###               raise TypeError("Indices of the sequence must be integers")
 ###   
@@ -187,7 +186,7 @@ class PRecSequence(RingElement):
 ###           self.parent = annihilator.parent()
 ###   
 ###           # Check if there are enough initial conditions
-###           l = len (self.cond_init)
+###           l = len (self.cond)
 ###           if l < self.order : 
 ###               err_string = "Not enough initial conditions."
 ###               err_string += "Please provide at least " + order + "conditions"
@@ -195,7 +194,7 @@ class PRecSequence(RingElement):
 ###               raise Exception (err_string)
 ###               # TODO check if param l were used when catching excn
 ###   
-###           # print(self.cond_init)
+###           # print(self.cond)
 
 ###       def _element_constuctor_(self,x):
 ###           return PRecSequence(const = x)
@@ -220,6 +219,7 @@ class PRecSequence(RingElement):
 
     def next(self):
         self.i += 1
+        # TODO check if [0] or [-1]
         return (self[self.i])[0]
 
 
@@ -230,7 +230,7 @@ class PRecSequence(RingElement):
         """
         # TODO provide support for step?
 
-        lowest = min(self.cond_init.keys())
+        lowest = min(self.cond.keys())
         if not start :
             start = lowest
         # start/stop cannot be lower than lowest index
@@ -262,8 +262,8 @@ class PRecSequence(RingElement):
 
 
         if start < 100 :
-            vals = [self.cond_init[i] for i in sorted (self.cond_init.keys())  ]
-            # vals = [self.cond_init[i] for i in sorted (self.cond_init.keys())]
+            vals = [self.cond[i] for i in sorted (self.cond.keys())  ]
+            # vals = [self.cond[i] for i in sorted (self.cond.keys())]
             # Use recursive method
             if(start < len(vals) - self.order):
                 ret = vals[start:]
@@ -271,7 +271,7 @@ class PRecSequence(RingElement):
                 ret = (self.annihilator.to_list(vals, start+self.order)[-self.order:])
             # TODO check val of 'start' in case Sequence does not start at 0
         else :
-            vals = [self.cond_init[i] for i in sorted (self.cond_init.keys())]
+            vals = [self.cond[i] for i in sorted (self.cond.keys())]
             P,Q = self.annihilator.forward_matrix_bsplit (start-(len(vals)-self.order),len(vals)-self.order) 
             # TODO chech params of forward_matrix too...
             if Q==0:
@@ -363,8 +363,8 @@ class PRecSequence(RingElement):
 ###   
 ###           #a rework is needed here
 ###           #compute enough value add Sequence
-###           cond1 = self.to_list(max(len_cond,order(new_annihilator),len(self.cond_init.keys()) ))
-###           cond2 = other.to_list(max(len_cond,order(new_annihilator),len(other.cond_init.keys())))
+###           cond1 = self.to_list(max(len_cond,order(new_annihilator),len(self.cond.keys()) ))
+###           cond2 = other.to_list(max(len_cond,order(new_annihilator),len(other.cond.keys())))
 ###   
 ###   
 ###           new_cond = [sum(x) for x in zip(cond1, cond2)]
@@ -408,8 +408,8 @@ class PRecSequence(RingElement):
 ###                                                                                           and elt >= 0 )]))
 ###   
 ###           #compute enough value mult Sequence
-###           cond1 = self.to_list(max(len_cond,order(new_annihilator),len(self.cond_init.keys()) ))
-###           cond2 = other.to_list(max(len_cond,order(new_annihilator),len(other.cond_init.keys())))
+###           cond1 = self.to_list(max(len_cond,order(new_annihilator),len(self.cond.keys()) ))
+###           cond2 = other.to_list(max(len_cond,order(new_annihilator),len(other.cond.keys())))
 ###           
 ###           new_cond = [x*y for x,y in zip(cond1, cond2)]
 ###   
@@ -439,15 +439,15 @@ class PRecSequence(RingElement):
         raise NotImplementedError
 
     def is_const(self):
-        print(self.cond_init.values())
-        for i in self.cond_init.values():
-            if(i != self.cond_init.values()[0]):
+        print(self.cond.values())
+        for i in self.cond.values():
+            if(i != self.cond.values()[0]):
                 return False
         #compute enough value
         tab = self.to_list(2*self.order,self.order)
         print(tab)
         for elt in tab:
-            if(elt != self.cond_init.values()[0]):
+            if(elt != self.cond.values()[0]):
                 return False
         #if is const change self with a reduction????
 

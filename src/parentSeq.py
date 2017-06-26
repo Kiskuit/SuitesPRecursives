@@ -58,7 +58,7 @@ class ParentSeqRec (Ring, UniqueRepresentation):
         # TODO lower boundary guessing --> `8` hard coded but ugly
         if x in self.base_ring() :
             gen = self.base_ring().gen()
-            condInit = x.subs({gen:0})
+            condInit = [x.subs({gen:0})]
             annihil = -guess ([x.subs({gen:i}) for i in range(8)], self._ore_algebra)
             return self.element_class (self, condInit, annihil)
 
@@ -78,6 +78,10 @@ class ParentSeqRec (Ring, UniqueRepresentation):
         
         # Default case 
         return False
+
+    def guess (self, vals) :
+        annihil = -guess (vals, self._ore_algebra)
+        return self.element_class (self, vals, annihil)
 
 
 
