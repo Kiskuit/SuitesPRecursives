@@ -111,10 +111,9 @@ class PRecSequence(RingElement):
             except : # condInit is not a list either
                 raise ValueError ("condInit must be a list or a dict")
         
+        if annihilator not in parent.ore_algebra():
+            return ValueError("`annihilator must be in {}.".format(parent.ore_algebra()))
         self.annihilator = annihilator
-        print (annihilator, parent.base_ring())
-        #if annihilator not in parent.base_ring():
-        #    raise ValueError("`annihilator` must be in {}.".format(parent.base_ring()))
         order = annihilator.order()
         if len (condInit) < order : 
             raise ValueError ("Not enough initial conditions")
@@ -416,7 +415,7 @@ class PRecSequence(RingElement):
 ###   
 ###           return PRecSequence(new_cond,new_annihilator)
     
-    def __eq__(self, other):
+    def _eq_(self, other):
         try :
             sub = self - other
         except :
@@ -427,14 +426,16 @@ class PRecSequence(RingElement):
             return True
         return False
 
-    def __ne__ (self, other):
+    def _ne_ (self, other):
         ret = self == other
         if ret == NotImplemented : 
             return ret
         return not self == other
 
-    # TODO
     def _cmp_ (self, other):
+        raise NotImplementedError
+
+    def __cmp__ (self, other):
         raise NotImplementedError
 
     def is_const(self):

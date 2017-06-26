@@ -17,7 +17,7 @@ from ore_algebra import OreAlgebra
 from seq import PRecSequence
 
 # TODO change class it inherits from ?
-class ParentSeqRec (Ring):
+class ParentSeqRec (Ring, UniqueRepresentation):
     Element = PRecSequence
     # TODO generator as optional arg and if none : gen = 'S'+base.gen() ?
     def __init__(self, base_ring, generator, val_ring, category=None):
@@ -42,6 +42,13 @@ class ParentSeqRec (Ring):
         ret = "P-Recursive sequences over `{}`, with values in `{}`".format(self.base_ring(),
                                                                             self.val_ring())
         return ret
+
+    def _element_constructor_(self, *args, **kwargs):
+        # TODO why 1?
+        print (args, len(args))
+        if len(args) != 1:
+            pass
+            #return self.element_class (self, *args, **kwargs)
 
 
 if __name__ == "__main__":
