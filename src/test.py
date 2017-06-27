@@ -5,11 +5,8 @@ from parentSeq import *
 from ore_algebra import *
 import time
 
-if __name__ == "__main__":
-    #n = ZZ['n'].gen()
-    #P = ParentSeqRec (ZZ['n'], 'Sn', RR)
-    #a = P ([0,1], Sn^2 - Sn - 1)
 
+def test1():
     R,n = ZZ['n'].objgen()
     A,Sn = OreAlgebra(R, 'Sn').objgen()
 
@@ -43,4 +40,13 @@ if __name__ == "__main__":
     else :
         print ("SUCCESS")
 
+def test2():
+    pass
+
+if __name__ == "__main__":
+    #n = ZZ['n'].gen()
+    #P = ParentSeqRec (ZZ['n'], 'Sn', RR)
+    #a = P ([0,1], Sn^2 - Sn - 1)
+
+    test2()
     

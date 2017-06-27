@@ -71,7 +71,7 @@ class ParentSeqRec (Ring, UniqueRepresentation):
         return self.element_class (self, x, **kwargs)
 
     def _coerce_map_from_ (self, S):
-        if self.ore_algebra().has_coerce_map_from (S):
+        if self.ore_algebra().base_ring().has_coerce_map_from (S):
             return True
         if self._val_ring.has_coerce_map_from (S):
             return True

@@ -99,13 +99,12 @@ class PRecSequence(RingElement):
 
         # type checking via duck typing
         # TODO check if this enough
-        try :
+        if isinstance(condInit, dict):
             self.cond = condInit.copy()
-        except AttributeError : # condInit is not a dict
-            try :
-                self.cond = {i:val for i,val in enumerate(condInit)}
-            except : # condInit is not a list either
-                raise ValueError ("condInit must be a list or a dict")
+        elif isinstance(condInit, list):
+            self.cond = {i:val for i,val in enumerate(condInit)}
+        else :
+            raise ValueError ("condInit must be a list or a dict")
         self.i = self.cond.keys()[0]
         
         if annihilator not in parent.ore_algebra():
@@ -293,8 +292,25 @@ class PRecSequence(RingElement):
         return ret
 
     def _condJustReplace (self, start, stop, step):
+        # TODO use of forwardmatrix when better!
+
+        ret = []
+        cond = [self.cond[i] for i in sorted (self.cond.keys())][:self.order()]
+        if start > 100 + max(self.cond.keys()):
+            # use of forward matrix bsplit to compute ret first terms
+            P,Q = self.annihilator.forward_matrix_bsplit (stop-start)
+            if Q==0:
+                # TODO find a better exception.
+                raise Exception ("Degenerated values in the sequence.")
+            ret = [e[0] for e in (P*Matrix([[f] for f in cond]))/Q]
+                
+        else :
+            # Recursive method to compute ret first terms
+            ret = self.annihilator.to_list(cond, start+self.order())[-self.order():]
+        self.annihilator.to_list(ret, stop-start, start=start, append=True)
+        print (ret)
+        return
         
-        ret = [self.cond[k] for k in sorted(self.cond.keys())] 
         min_ = min(self.cond.keys())
 
         # Case where stop index is lower than order
