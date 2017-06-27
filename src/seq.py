@@ -93,11 +93,9 @@ class PRecSequence(RingElement):
     """
     # TODO Globally change members name to _name, so i can use getters called name
 
-    def __init__ (self, parent, condInit, annihilator):
+    def __init__ (self, parent, condInit, annihilator, justReplace=True):
         """
         """
-
-        #self.parent = parent
 
         # type checking via duck typing
         # TODO check if this enough
@@ -116,8 +114,12 @@ class PRecSequence(RingElement):
         order = annihilator.order()
         if len (condInit) < order : 
             raise ValueError ("Not enough initial conditions")
+        self.justReplace = justReplace
 
         RingElement.__init__(self, parent)
+
+    def order (self):
+        return self.annihilator.order()
 
 
 ###       def __init__(self, cond=None, annihilator=None, const=None,Ore = None):
@@ -234,34 +236,34 @@ class PRecSequence(RingElement):
         if not start :
             start = lowest
         # start/stop cannot be lower than lowest index
-        if stop <= lowest or start < lowest :
+        if stop < lowest or start < lowest :
             err_str = "Index out of bond, indices cannot be lower than "
             err_str += str(lowest) + "."
             raise IndexError(err_str)
         return self[start:stop]
 
 
-    def __getitem__(self,sl):
+    def __getitem__(self,slice_):
+        # TODO Add support for step
         # Get start, stop and step params
-        # TODO check if isinstance is better?
-        if type(sl) == slice :
-            start = sl.start
-            step = sl.step
-            stop = sl.stop
-            if not step:
-                step=1
-        else :
-            start = sl 
-            stop = sl+1
+        # TODO type checking via type or isinstance better?
+        try :
+            start = slice_.start or min(self.cond.keys())
+            step = slice_.step or 1
+            stop = slice_.stop
+        except AttributeError:
+            start = slice_ 
+            stop = slice_+1
             step = 1
         ret = []
 
+        if stop < start :
+            raise IndexError("Upper index must not be smaller than the lower index")
+
         # For low values of start, recursion is faster than forward_matrix
-        # TODO actual test to estimate the value at which the shift happen
+        # Value of 100 was determined experimentally (to try again?)
         # TODO check value in dict
-
-
-        if start < 100 :
+        if start < 100 + max(self.cond.keys()):
             vals = [self.cond[i] for i in sorted (self.cond.keys())  ]
             # vals = [self.cond[i] for i in sorted (self.cond.keys())]
             # Use recursive method
@@ -275,8 +277,7 @@ class PRecSequence(RingElement):
             P,Q = self.annihilator.forward_matrix_bsplit (start-(len(vals)-self.order),len(vals)-self.order) 
             # TODO chech params of forward_matrix too...
             if Q==0:
-                # This should not happen since __init__ must look for problems !
-                #   (Or does it? is it really needed?)
+                # TODO find a better exception.
                 raise Exception ("Degenerated values in the sequence.")
             for e in (P*Matrix([[f] for f in vals[-self.order:]]))/Q :
                 ret += e
@@ -290,6 +291,28 @@ class PRecSequence(RingElement):
         # TODO handle step so to not return every element if not needed
 
         return ret
+
+    def _condJustReplace (self, start, stop, step):
+        
+        ret = [self.cond[k] for k in sorted(self.cond.keys())] 
+        min_ = min(self.cond.keys())
+
+        # Case where stop index is lower than order
+        if stop <= self.order():
+            return ret[start:stop]
+
+        if stop < 100 : # Use to_list method
+            ret = self.annihilator.to_list(ret, stop, start=min_)
+
+        # Replace with conds
+        for key in self.cond.keys():
+            ret[key] = self.cond[key]
+
+        return ret[start::step]
+
+    def _condTakenIntoAccount (self, start, stop, step):
+        raise NotImplementedError("This function is not yet implemented, please use `justReplace=True` instead")
+
 
 
     def _add_ (self, other):
@@ -460,28 +483,11 @@ class PRecSequence(RingElement):
         return "P-recursive sequence\n"+ _str
 
 
-###################################################################
-#                  maintenant dans le contrusteur                 #
-###################################################################
-def guessSequence(data,Ore):
-    if not Ore.is_S():
-        raise Exception("You don't use the Shift operator in OreAlgebra")
-        L = guess(data,Ore)
-        return -L
 
 
-def constPRecSequence(val):
-    #----until we find a best way to do that---
-    a = Sequence([val],use_sage_types= True)
-    base_ring = a[0].parent()
-    #------------------------------------------
-    A,n = base_ring["x"].objgen()
-    R,Sn = OreAlgebra(A,"Sx").objgen()
-    const = Sn - 1
-
-    return PRecSequence([val],const)    
-###################################################################
-###################################################################
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
 
 def ExprToSeq(expression):
     if( type(expression) != sage.symbolic.expression.Expression):
