@@ -182,7 +182,7 @@ class PRecSequence(RingElement):
             cond_vals[-1] = self.cond[key]
             cond = {key-self.order()+1+i:cond_vals[i] for i in range(self.order())}
         if key and start <= key:
-            ret += self._computeElements(cond, key+1,stop)
+            ret += self._computeElements(cond, key+1,stop, method=self._method)
         else:
             ret += self._computeElements(cond, start, stop, method = self._method)
         return ret
@@ -204,8 +204,7 @@ class PRecSequence(RingElement):
             if Q==0:
                 raise Exception ("Degenerated values in the sequence.")
             # Why did we use that before, and not anymore..?
-            #cond_vals = ((P*Matrix([[f] for f in cond]))/Q).transpose()[0]
-            cond_vals = (P/Q).transpose()[-1]
+            cond_vals = (P*vector([cond[k] for k in sorted(cond.keys())])/Q)
             min_ = start
 
         ret = self.annihilator.to_list (cond_vals, stop-min_, start=min_)[start-min_:stop-min_]
