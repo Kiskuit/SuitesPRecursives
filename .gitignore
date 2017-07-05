@@ -5,9 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-première partie (Parallélisation de la version naïve), accompagné des slides
-de votre soutenance au format pdf (et donc sans animations) (prévoir une soutenance de
-10 minutes, suivie de 5 minutes de questions), est à remettre au plus
+
 # Distribution / packaging
 .Python
 env/
@@ -92,6 +90,7 @@ ENV/
 
 # Vim files
 *.swp
+*.swo
 *~
 
 # TeX files
