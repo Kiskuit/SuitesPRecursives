@@ -13,6 +13,7 @@ from __future__ import print_function
 from sage.rings.ring import Ring
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.categories.rings import Rings
+from sage.structure.coerce import py_scalar_to_element
 #from sage.all import *
 from ore_algebra import OreAlgebra, guess
 from seq import PRecSequence
@@ -102,11 +103,10 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         """
         if len(args) != 1:
             return self.element_class (self, *args, **kwargs)
-        x = args[0]
+        x = py_scalar_to_element(args[0])
         try :
             P = x.parent()
         except AttributeError :
-            # TODO what if attributerror?
             return self.element_class (self, x, **kwargs)
 
         # x is in base_ring()
@@ -155,21 +155,21 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
 
 
 
-if __name__ == "__main__":
-    R = ZZ['n']
-    par = ParentPRecursiveSequences (R,'Sn',RR)
-    print ("-"*32)
-    print (par)
-    print ("-"*32)
-    try:
-        par = ParentPRecursiveSequences (R,'Sx',RR)
-        print (par)
-    except TypeError:
-        print ("Sx is not a generator of the OreAlgebra over {}.".format(R))
-    print ("-"*32)
-    try:
-        par = ParentPRecursiveSequences (ZZ, 'Sn', RR)
-        print (par)
-    except TypeError:
-        print ("ZZ isnt a proper ring for OreAlgebra.")
-    print ("-"*32)
+###   if __name__ == "__main__":
+###       R = ZZ['n']
+###       par = ParentPRecursiveSequences (R,'Sn',RR)
+###       print ("-"*32)
+###       print (par)
+###       print ("-"*32)
+###       try:
+###           par = ParentPRecursiveSequences (R,'Sx',RR)
+###           print (par)
+###       except TypeError:
+###           print ("Sx is not a generator of the OreAlgebra over {}.".format(R))
+###       print ("-"*32)
+###       try:
+###           par = ParentPRecursiveSequences (ZZ, 'Sn', RR)
+###           print (par)
+###       except TypeError:
+###           print ("ZZ isnt a proper ring for OreAlgebra.")
+###       print ("-"*32)
