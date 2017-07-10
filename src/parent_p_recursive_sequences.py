@@ -16,7 +16,7 @@ from sage.categories.rings import Rings
 from sage.structure.coerce import py_scalar_to_element
 #from sage.all import *
 from ore_algebra import OreAlgebra, guess
-from seq import PRecSequence
+from p_recursive_sequences import PRecursiveSequence
 
 class ParentPRecursiveSequences (Ring, UniqueRepresentation):
     r"""
@@ -32,7 +32,7 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         sage: map(lambda x:Seqs.has_coerce_map_from(x), [ZZ,QQ,RR,CC])
         [True,True,True,True]
     """
-    Element = PRecSequence
+    Element = PRecursiveSequence
     # TODO generator as optional arg and if none : gen = 'S'+base.gen() ?
     def __init__(self, base_ring, generator=None, values_ring=None, category=None):
         r"""
