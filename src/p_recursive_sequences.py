@@ -121,11 +121,24 @@ class PRecursiveSequence(RingElement):
         INPUT
         """
         def iterfct():
-            i = min(self.cond)
+            #i = min(self.cond)
+            ord_ = self.order()
+            cond = [(k,self.cond[k]) for k in sorted(self.cond)][:ord_]
+            for k,v in cond:
+                i = k+1
+                yield v
             while True:
-                ret = self[i]
-                i += 1
-                yield ret
+                if i in self.cond:
+                    cond.append((i,self.cond[i]))
+                    cond = cond[1:]
+                    i += 1
+                    yield cond[-1][1]
+                else:
+                    ret = self._computeElements (dict(cond), i, i+1)[0]
+                    cond.append((i,ret))
+                    cond = cond[1:]
+                    i += 1
+                    yield ret
         return iterfct()
 
     ###############################################################
