@@ -5,7 +5,7 @@
 # ---------------------------------------------------------
 # Author : Mathis Caristan (mathis.caristan@gmail.com)
 # Date : 19/06/2017
-# Class : PRecSequence -- Class to manipulate and compute
+# Class : PRecursiveSequence -- Class to manipulate and compute
 #   with p-recursive sequences in Sage/Python
 # Copyright 2017 Mathis Caristan
 # ---------------------------------------------------------
@@ -15,6 +15,7 @@ from __future__ import print_function
 
 # from sage.all import *
 # from ore_algebra import *
+# Sage imports
 from sage.structure.element import RingElement
 from sage.structure.sequence import Sequence
 from sage.structure.sage_object import op_EQ,op_NE
@@ -34,7 +35,7 @@ class PRecursiveSequence(RingElement):
         sage: P = ParentPRecursiveSequences(ZZ['n'])
         sage: n = P.base_ring().gen()
         sage: Sn = P.generator()
-        sage: fibo = PRecSequence (P, [0,1], Sn**2-Sn-1)
+        sage: fibo = PRecursiveSequence (P, [0,1], Sn**2-Sn-1)
         sage: fibo[8] == sloane.A000045[8], fibo[8]
         (True, 21)
         sage: fibo[5:9]
@@ -55,8 +56,8 @@ class PRecursiveSequence(RingElement):
             sage: P = ParentPRecursiveSequences(ZZ['n'])
             sage: n = P.base_ring().gen()
             sage: Sn = P.generator()
-            sage: fibo1 = PRecSequence(P, [0,1], Sn**2 - Sn - 1)
-            sage: fibo2 = PRecSequence(P, {0:0,1:1}, Sn**2 - Sn -1)
+            sage: fibo1 = PRecursiveSequence(P, [0,1], Sn**2 - Sn - 1)
+            sage: fibo2 = PRecursiveSequence(P, {0:0,1:1}, Sn**2 - Sn -1)
             sage: fibo1 == fibo2
             True
         """
@@ -69,39 +70,47 @@ class PRecursiveSequence(RingElement):
             raise ValueError ("condInit must be a list or a dict.")
 ###        self._i = sorted(self.cond.keys())[0]-1
         
-        self.annihilator = parent.ore_algebra().coerce(annihilator)
-        if self.annihilator.parent() is not parent.ore_algebra():
+        self._annihilator = parent.ore_algebra().coerce(annihilator)
+        if self.annihilator().parent() is not parent.ore_algebra():
             raise ValueError("`annihilator` must be in {}.".format(parent.ore_algebra()))
         # Must have enough initial conditions
-        if len (self.cond) < self.annihilator.order() : 
+        if len (self.cond) < self.annihilator().order() : 
+            print (self.cond, self.annihilator().order(), self.annihilator())
             raise ValueError ("Not enough initial conditions.")
         # order first initial conditions must be consecutive
-        elif self.annihilator.order() != 0:
+        elif self.annihilator().order() != 0:
             keys = sorted(self.cond)
-            if keys[self.annihilator.order()-1] != keys[0] + self.annihilator.order()-1:
-                raise ValueError("{} first conditions must be consecutive.".format(self.annihilator.order()))
+            if keys[self.annihilator().order()-1] != keys[0] + self.annihilator().order()-1:
+                raise ValueError("{} first conditions must be consecutive.".format(self.annihilator().order()))
 
         RingElement.__init__(self, parent)
 
     ###############################################################
 
+    def annihilator(self):
+        r"""
+        Returns the annihilator of the sequence.
+        """
+        return self._annihilator
+    ###############################################################
+
     def order (self):
         r"""
-        Returns the order of a sequence. The order of a sequence, is the order of its annihilator
+        Returns the order of a sequence. The order of a sequence, is the order of its annihilator.
 
         EXAMPLES::
             sage: from parent_p_recursive_sequences import *
             sage: Seqs = ParentPRecursiveSequences(ZZ['n'])
-            sage: n = Seqs.generator()
-            sage: Sn = P.generator()
-            sage: fibo = P([0,1], Sn^2-Sn-1)
+            sage: n = Seqs.base_ring().gen()
+            sage: Sn = Seqs.generator()
+            sage: fibo = Seqs([0,1], Sn^2-Sn-1)
             sage: fibo.order()
             2
-            sage: u = P([0,2,5,-3], (3*n^2-4)*Sn^4 - 3*Sn^3 + (n+1)*Sn^2 - 5
+            sage: u = Seqs([0,2,5,-3], (3*n^2-4)*Sn^4 - 3*Sn^3 + (n+1)*Sn^2 - 5)
             sage: u.order()
             4
         """
-        return self.annihilator.order()
+        return self.annihilator().order()
 
     ###############################################################
 
@@ -131,10 +140,10 @@ class PRecursiveSequence(RingElement):
                    In both cases, it behaves like the 'range()' function, and last index will not be included.
         
         EXAMPLES::
-            sage: import parentSeq
+            sage: from parent_p_recursive_sequences import *
             sage: Seqs = ParentPRecursiveSequences(QQ['n'])
-            sage: Sn = P.generator()
-            sage: fibo = P([0,1], Sn^2-Sn-1)
+            sage: Sn = Seqs.generator()
+            sage: fibo = Seqs([0,1], Sn^2-Sn-1)
             sage: fibo.list(7)
             [0, 1, ..., 8]
             sage: fibo.list(5,9)
@@ -146,8 +155,9 @@ class PRecursiveSequence(RingElement):
         # TODO provide support for step?
         lowest = min(self.cond.keys())
         if len(args)==0:
-            raise TypeError('list() takes at least 2 arguments (1 given)')
-        if len(args)==1:
+            start = min(self.cond)
+            stop = start + 10
+        elif len(args)==1:
             start = lowest
             stop = args[0]
         elif len(args)==2:
@@ -155,6 +165,7 @@ class PRecursiveSequence(RingElement):
             stop = args[1]
         else:
             print ("list() :call to list, too many args :", args)
+            raise TypeError("Too many arguments for list")
         # start/stop cannot be lower than lowest index
         if stop < lowest or start < lowest :
             err_str = "Index out of bond, indices cannot be lower than "
@@ -241,7 +252,6 @@ class PRecursiveSequence(RingElement):
         # Computation
         prev = min(start, max(init_keys))
         ret = Sequence([], universe=self.parent().values_ring(), use_sage_types=True)
-        print ('condTakenIntoacc() : extra :', extra_keys)
         while extra_keys != [] and extra_keys[0] <= stop:
             key = extra_keys.pop(0)
             if key > start:
@@ -250,7 +260,6 @@ class PRecursiveSequence(RingElement):
                 algo = 'to_list'
             else:
                 sta = key-ord_ + 1
-            print('condTaken() : ', cond,key, key+1)
             cond_vals = self._computeElements (cond, sta, key+1, algorithm=algo)
             # If it exists, replace values by user's initial conditions
             if ini[key] is not None:
@@ -282,36 +291,41 @@ class PRecursiveSequence(RingElement):
         if algorithm == 'to_list':
             cond_vals = [cond[k] for k in sorted(cond.keys())]
         else:
-            P,Q = self.annihilator.forward_matrix_bsplit(start-min_,start=min_)
+            P,Q = self.annihilator().forward_matrix_bsplit(start-min_,start=min_)
             if Q==0:
                 raise Exception ("degenerate values in the sequence.")
             # Why did we use that before, and not anymore..?
             cond_vals = (P*vector([cond[k] for k in sorted(cond.keys())])/Q)
             min_ = start
 
-        ret = self.annihilator.to_list (cond_vals, stop-min_, start=min_)[start-min_:stop-min_]
+        ret = self.annihilator().to_list (cond_vals, stop-min_, start=min_)[start-min_:stop-min_]
         return ret
 
     ###############################################################
 
 
     def _add_ (self, other):
-        # TODO add cond init in case of discrepancy
         _class = self.__class__
         # Compute new annihilator
-        sum_annihilator = self.annihilator.lclm(other.annihilator)
+        sum_annihilator = self.annihilator().lclm(other.annihilator())
         ord_ = sum_annihilator.order()
-        # Set of keys that need to be computed
         key_set = set()
         start = max(self.cond.keys()[0], other.cond.keys()[0])
-        for e in range(start, start + ord_): # base init cond
+        # ord_ first keys
+        for e in range(start, start + ord_):
             key_set.add(e)
-        for e in self.cond: # additional init cond
+        # extra init cond from self
+        for e in self.cond:
+            if e > start:
+                key_set.add(e)
+        # extra init cond from other
+        for e in other.cond:
             if e > start:
                 key_set.add(e)
         leadPol = sum_annihilator[ord_]
         roots = leadPol.roots(multiplicities=False)
-        for r in roots: # degenerate vals
+        # roots
+        for r in roots:
             r += ord_
             if r in ZZ and r > start:
                 key_set.add(r)
@@ -322,65 +336,82 @@ class PRecursiveSequence(RingElement):
                 right = other[e]
                 sum_cond[e] = left+right
             except: # TODO handle exception (which type)
-                raise NotImplementedError
-
+                continue
         return _class(self.parent(), sum_cond, sum_annihilator)
 
     ###############################################################
 
     def _sub_ (self, other):
-        # TODO add cond init in case of discrepancy
-
         _class = self.__class__
         # Compute new annihilator
-        sub_annihilator = self.annihilator.lclm(other.annihilator)
-        # Compute initial conditions
-        min_ = max(self.cond.keys()[0], other.cond.keys()[0])
-        sub_cond = {}
-        for i in range(min_, min_ + sub_annihilator.order()):
-            sub_cond[i] = self[i] - other[i]
-        # Compute additional terms to avoid degenerate values
-        leadPol = sub_annihilator[sub_annihilator.order()]
-        roots = leadPol.roots()
-        for r,_ in roots :
-            r += sub_annihilator.order()
-            if (r >= min_):
-                try:
-                    left = self[r]
-                    right = other[r]
-                    sub_cond[r] = left-right
-                except:  # TODO handle exception (and which one precisely) better
-                    break
-
-        return _class(self.parent(), sub_cond, sub_annihilator)
+        sum_annihilator = self.annihilator().lclm(other.annihilator())
+        ord_ = sum_annihilator.order()
+        key_set = set()
+        start = max(self.cond.keys()[0], other.cond.keys()[0])
+        # ord_ first keys
+        for e in range(start, start + ord_):
+            key_set.add(e)
+        # extra init cond from self
+        for e in self.cond:
+            if e > start:
+                key_set.add(e)
+        # extra init cond from other
+        for e in other.cond:
+            if e > start:
+                key_set.add(e)
+        leadPol = sum_annihilator[ord_]
+        roots = leadPol.roots(multiplicities=False)
+        # roots
+        for r in roots:
+            r += ord_
+            if r in ZZ and r > start:
+                key_set.add(r)
+        sum_cond = {}
+        for e in key_set:
+            try:
+                left = self[e]
+                right = other[e]
+                sum_cond[e] = left-right
+            except: # TODO handle exception (which type)
+                continue
+        return _class(self.parent(), sum_cond, sum_annihilator)
             
     ###############################################################
 
     def _mul_ (self, other):
-        #TODO add cond in case of discrepancy
-
         _class = self.__class__
         # Compute new annihilator
-        prod_annihilator = self.annihilator.symmetric_product(other.annihilator)
-        # Compute new init cond
-        prod_cond = {}
-        _min = max(self.cond.keys()[0], other.cond.keys()[0])
-        for i in range(_min, _min+prod_annihilator.order()):
-            prod_cond[i] = self[i] * other[i]
-        # Compute additional terms to avoid degenerate values
-        leadPol = prod_annihilator[prod_annihilator.order()]
-        roots = leadPol.roots()
-        for r,_ in roots :
-            r += prod_annihilator.order()
-            if (r >= min_):
-                try:
-                    left = self[r]
-                    right = other[r]
-                    prod_cond[r] = left*right
-                except:  # TODO handle exception (and which one precisely) better
-                    break
-
-        return _class (self.parent(), prod_cond, prod_annihilator)
+        sum_annihilator = self.annihilator().symmetric_product(other.annihilator())
+        ord_ = sum_annihilator.order()
+        key_set = set()
+        start = max(self.cond.keys()[0], other.cond.keys()[0])
+        # ord_ first keys
+        for e in range(start, start + ord_):
+            key_set.add(e)
+        # extra init cond from self
+        for e in self.cond:
+            if e > start:
+                key_set.add(e)
+        # extra init cond from other
+        for e in other.cond:
+            if e > start:
+                key_set.add(e)
+        leadPol = sum_annihilator[ord_]
+        roots = leadPol.roots(multiplicities=False)
+        # roots
+        for r in roots:
+            r += ord_
+            if r in ZZ and r > start:
+                key_set.add(r)
+        sum_cond = {}
+        for e in key_set:
+            try:
+                left = self[e]
+                right = other[e]
+                sum_cond[e] = left*right
+            except: # TODO handle exception (which type)
+                continue
+        return _class(self.parent(), sum_cond, sum_annihilator)
 
     ###############################################################
     
@@ -406,6 +437,7 @@ class PRecursiveSequence(RingElement):
         TODO::
         - add possibility to test only from a given value upwards
         """
+        # If order is 0, the sequence is 0 everywhere but the initial conditions
         if self.order() == 0:
             for _,v in self.cond.iteritems():
                 if v != 0:
@@ -414,8 +446,7 @@ class PRecursiveSequence(RingElement):
         min_ = min(self.cond)
         cst = self - min_
         min_ = min(cst.cond)
-        vals = cst[min_,min_+cst.order()+1]
-        print ('is_const :', vals)
+        vals = cst[min_:min_+cst.order()]
         for v in vals:
             if v != 0:
                 return False
@@ -424,9 +455,12 @@ class PRecursiveSequence(RingElement):
     ###############################################################
 
     def _repr_(self):
-        _str = "annihilator : "+str(self.annihilator)+"\n"
-        _str += "values : "+str(self.list(9))+" ...\n"
-        return "P-recursive sequence\n"+ _str
+        vals = self.list()
+        str_ = "["
+        for v in vals:
+            str_ += str(v) + ", "
+        str_ += "...]"
+        return str_
 
     ###############################################################
     ###############################################################
@@ -439,39 +473,9 @@ if __name__ == "__main__" :
     Sn = Seqs.generator()
     fibo = Seqs([0,1], Sn**2 - Sn - 1)
     print(fibo + Seqs())
-###   
-###       # algebre d'Ore en les variable Sn et n
-###       A,n = ZZ["n"].objgen()
-###       R,Sn = OreAlgebra(A,"Sn").objgen()
-###   
-###       # algebre d'Ore en les variable Sx et x
-###       A2,x = ZZ["x"].objgen()
-###       R2,Sx = OreAlgebra(A2,"Sx").objgen()
-###       
-###       ##                                 ##
-###       # Suite avec des racines Dégénerés  #
-###       ##                                 ##
-###       cond = {0:0, 1:1, 2:1, 3:2, 4:3, 5:5, 7:13}
-###       # u1 = (n-1)*(n-2)*Sn**3 - (n-1)*(n-2)*3*Sn - (n-1)*(n-2)*8
-###       u1 = (n-1)*(n-2)*(n-203)*Sn**2 - (n-1)*(n-2)*3*Sn - (n-1)*(n-2)*8
-###       s1 = PRecSequence (cond, u1)
-###       print("s1:")
-###       print (s1[20:23])
-###       print (s1[103:110])
-###       ## fin test suite avec racine dégénéré ##########""
-###   
-###   
-###       ##  fibonacci  ##
-###       cond2 = {0:0, 1:1, 2:1, 3:2, 4:3, 5:5}
-###       u2 = Sn**2 - Sn - 1
-###       fib = PRecSequence (cond2, u2)
-###       print("fib[0:10]:")
-###       print(fib[0:10])
-###   
-###       ##  factoriel  ##
 ###       cond3 = [1]
 ###       u3 = Sx - x -1
-###       fact = PRecSequence (cond3, u3)
+###       fact = PRecursiveSequence (cond3, u3)
 ###       print("fact[0:10]")
 ###       print(fact[0:10])
 ###   
@@ -488,8 +492,8 @@ if __name__ == "__main__" :
 ###       print(fib+2)
 ###   
 ###       ##  const suites  ##
-###       SConst = constPRecSequence(2)
-###       Sconst2 = PRecSequence(const = 3)
+###       SConst = constPRecursiveSequence(2)
+###       Sconst2 = PRecursiveSequence(const = 3)
 ###   
 ###       ## ajout de fib et d'une suite constante
 ###       print("somme de Sconst2 + fib")
@@ -497,8 +501,8 @@ if __name__ == "__main__" :
 ###   
 ###       ##  Test Guessing 1  ##
 ###       print("test guessing")
-###       print(PRecSequence(cond = [1,3,5,7,9,11], Ore = R))         #ok
-###       print(PRecSequence(cond = [0,2,4,8,16,32,64], Ore = R))     #ok
-###       print(PRecSequence(cond = [0,1,2,3,4,5], Ore = R))          #ok
-###       print(PRecSequence(cond = [0,1], Ore = R))                  #fail "no relation found"
+###       print(PRecursiveSequence(cond = [1,3,5,7,9,11], Ore = R))         #ok
+###       print(PRecursiveSequence(cond = [0,2,4,8,16,32,64], Ore = R))     #ok
+###       print(PRecursiveSequence(cond = [0,1,2,3,4,5], Ore = R))          #ok
+###       print(PRecursiveSequence(cond = [0,1], Ore = R))                  #fail "no relation found"
 ###   
