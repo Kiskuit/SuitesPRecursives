@@ -134,7 +134,10 @@ class PRecursiveSequence(RingElement):
                     i += 1
                     yield cond[-1][1]
                 else:
-                    ret = self._computeElements (dict(cond), i, i+1)[0]
+                    ret = self._computeElements (dict(cond), i, i+1,algo="to_list")[0]
+                    print (ret)
+                    if ret is None:
+                        raise Exception ("Degenerate value")
                     cond.append((i,ret))
                     cond = cond[1:]
                     i += 1
