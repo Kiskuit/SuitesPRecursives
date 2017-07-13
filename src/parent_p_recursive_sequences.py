@@ -30,7 +30,48 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         [True, False, False]
         sage: Seqs = ParentPRecursiveSequences(QQ['n'], values_ring=CC)
         sage: map(lambda x:Seqs.has_coerce_map_from(x), [ZZ,QQ,RR,CC])
-        [True,True,True,True]
+        [True, True, True, True]
+
+    TESTS::
+        sage: Seqs = ParentPRecursiveSequences(QQ['n']); Sn = Seqs.generator(); n = Seqs.base_ring().gen()
+        sage: z1 = Seqs(); z1
+        [0, 0, ..., 0, ...]
+        sage: z2 = Seqs(0); z2
+        [0, 0, ..., 0, ...]
+        sage: z1 == z2
+        True
+        sage: Seqs(1), Seqs(1) == Seqs.one(), Seqs.one() == 1
+        ([1, 1, ..., 1, ...], True, True)
+        sage: from random import randint
+        sage: annihil = Seqs.ore_algebra().random_element(); ord_ = annihil.order()
+        sage: uRnd = Seqs([randint(-20,20) for _ in range(ord_)], annihil)
+        sage: (uRnd - uRnd).is_zero()
+        True
+
+        sage: Seqs(42), Seqs(42) == 42
+        ([42, 42, 42, 42, ..., 42, ...], True)
+        sage: u = Seqs(3*n**3 - n**2 + 5); u
+        ???
+        sage: (u[3], u[57], u[5:9])
+        ???
+        sage: u[5:2]
+        IndexError: ...
+        sage: u[-5]
+        IndexError: ...
+
+        sage: fibo = Seqs([0,1], Sn**2 - Sn - 1); fibo
+        [0, 1, 1, 2, 3, ..., 34, ...]
+        sage: u = Seqs([1], Sn - 1); (u, u.is_one(), u == 1)
+        ([1, 1, 1, ..., 1, ...], True, True)
+        sage: v1 = Seqs([2], Sn-n); v2 = Seqs({0:2}, Sn-n); v3 = Seqs({1:2}, Sn-n)
+        sage: v1 == v2, v1 == v3, v2 == v3
+        (True, False, False)
+        sage: v1,v2,v3
+        ([2, 0, 0, 0, ..., 0, ...], [2, 0, 0, 0, ..., 0, ...], [2, 2, 4, ..., 725760, ...])
+
+        sage: fibo + 1
+        [1, 2, 2, 3, ..., 35, ...]
+        
     """
     Element = PRecursiveSequence
     # TODO generator as optional arg and if none : gen = 'S'+base.gen() ?
