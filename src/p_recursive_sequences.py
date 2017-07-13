@@ -19,6 +19,10 @@ from __future__ import print_function
 from sage.structure.element import RingElement
 from sage.structure.sequence import Sequence
 from sage.structure.sage_object import op_EQ,op_NE
+from sage.misc.cachefunc import cached_method
+from sage.rings.integer_ring import ZZ
+from sage.rings.semirings.non_negative_integer_semiring import NN
+from sage.rings.infinity import Infinity
 
 # TODO      * un constructeur (fonction séparée) qui fabrique une suite à partir d'une
 #           expression sage du genre factorial(n)*2^n + n,
@@ -45,7 +49,7 @@ class PRecursiveSequence(RingElement):
 
     _binary_splitting_threshold = 100
 
-    def __init__ (self, parent, condInit, annihilator):
+    def __init__ (self, parent, condInit, annihilator, nDomain=None):
         r"""
         Initializes a sequence. The initial conditions can be a list or a dictionary.
         If it is a list, it is assumed that the indices start at 0, and are consecutive.
@@ -68,14 +72,27 @@ class PRecursiveSequence(RingElement):
             self.cond = {i:val for i,val in enumerate(condInit)}
         else :
             raise ValueError ("condInit must be a list or a dict.")
-###        self._i = sorted(self.cond.keys())[0]-1
+        if len(self.cond) == 0:
+            self.cond = {0:0}
+
+        if nDomain is None:
+            self.nDomain = (min(self.cond),+Infinity)
+        else:
+            if nDomain == ZZ:
+                nDomain = (-Infinity, Infinity)
+            elif nDomain == NN:
+                nDomain = (0, Infinity)
+            if not reduce(lambda x,y: x and (y in ZZ or y is Infinity or y is -Infinity), nDomain, True):
+                raise ValueError("The domain boundaries must be in ZZ or +/- Infinity")
+            if not nDomain[0] < nDomain[1]:
+                raise ValueError("The domain [{},{}] is empty".format(*nDomain))
+            self.nDomain = nDomain
         
         self._annihilator = parent.ore_algebra().coerce(annihilator)
         if self.annihilator().parent() is not parent.ore_algebra():
             raise ValueError("`annihilator` must be in {}.".format(parent.ore_algebra()))
         # Must have enough initial conditions
         if len (self.cond) < self.annihilator().order() : 
-            print (self.cond, self.annihilator().order(), self.annihilator())
             raise ValueError ("Not enough initial conditions.")
         # order first initial conditions must be consecutive
         elif self.annihilator().order() != 0:
@@ -134,8 +151,7 @@ class PRecursiveSequence(RingElement):
                     i += 1
                     yield cond[-1][1]
                 else:
-                    ret = self._computeElements (dict(cond), i, i+1,algo="to_list")[0]
-                    print (ret)
+                    ret = self._computeElements (dict(cond), i, i+1,algorithm="to_list")[0]
                     if ret is None:
                         raise Exception ("Degenerate value")
                     cond.append((i,ret))
@@ -187,7 +203,11 @@ class PRecursiveSequence(RingElement):
             err_str = "Index out of bond, indices cannot be lower than "
             err_str += str(lowest) + "."
             raise IndexError(err_str)
-        return self[start:stop]
+        ret = self[start:stop]
+        try:
+            return list(ret)
+        except TypeError:
+            return [ret]
 
     ###############################################################
 
@@ -284,11 +304,14 @@ class PRecursiveSequence(RingElement):
             prev = key
             if key > start:
                 for elem in cond_vals[:-1]:
-                    # Enforce type of values via sequences
-                    try :
-                        ret.append(elem)
-                    except TypeError:
-                        raise TypeError("Values must be in {}".format(str(self.parent().values_ring())))
+                    if elem is None :
+                        ret = ret + [None]
+                    else:
+                        # Enforce type of values via sequences
+                        try :
+                            ret.append(elem)
+                        except TypeError:
+                            raise TypeError("Values must be in {}".format(str(self.parent().values_ring())))
         return ret 
 
     ###############################################################
@@ -429,6 +452,13 @@ class PRecursiveSequence(RingElement):
                 continue
         return _class(self.parent(), sum_cond, sum_annihilator)
 
+
+    def __nonzero__(self):
+        min_ = min(self.cond)
+        if self.is_const() and self.cond[min_]==0:
+            return False
+        return True
+
     ###############################################################
     
     def _richcmp_ (self, other, op):
@@ -446,6 +476,7 @@ class PRecursiveSequence(RingElement):
 
     ###############################################################
 
+    @cached_method
     def is_const(self):
         r"""
         Returns True if the sequence is constant, False otherwise
@@ -462,7 +493,7 @@ class PRecursiveSequence(RingElement):
         min_ = min(self.cond)
         cst = self - min_
         min_ = min(cst.cond)
-        vals = cst[min_:min_+cst.order()]
+        vals = cst.list(min_,min_+cst.order())
         for v in vals:
             if v != 0:
                 return False
@@ -483,12 +514,12 @@ class PRecursiveSequence(RingElement):
     ###############################################################
 
 if __name__ == "__main__" :
-    from sage.all import *
+    #from sage.all import *
     from parent_p_recursive_sequences import ParentPRecursiveSequences
     Seqs = ParentPRecursiveSequences(ZZ['n'])
     Sn = Seqs.generator()
-    fibo = Seqs([0,1], Sn**2 - Sn - 1)
-    print(fibo + Seqs())
+    u = PRecursiveSequence (Seqs, [], 1)
+    u.is_zero()
 ###       cond3 = [1]
 ###       u3 = Sx - x -1
 ###       fact = PRecursiveSequence (cond3, u3)
