@@ -45,8 +45,8 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         sage: from random import randint
         sage: annihil = Seqs.ore_algebra().random_element(); ord_ = annihil.order()
         sage: uRnd = Seqs([randint(-20,20) for _ in range(ord_)], annihil)
-        sage: (uRnd - uRnd).is_zero()
-        True
+        sage: (uRnd - uRnd).is_zero(), (uRnd - uRnd) == 0
+        (True, True)
 
         sage: Seqs(42), Seqs(42) == 42
         ([42, 42, 42, 42, ..., 42, ...], True)
@@ -68,9 +68,31 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         (True, False, False)
         sage: v1,v2,v3
         ([2, 0, 0, 0, ..., 0, ...], [2, 0, 0, 0, ..., 0, ...], [2, 2, 4, ..., 725760, ...])
+        sage: fibo2 = Seqs({1:1,2:1}, Sn**2-Sn-1); fibo2
+        [1, 1, 2, 3, ..., 55, ...]
+        sage: fibo == fibo2, fibo[1:9] == fibo2[1:9]
+        (False, True)
+        sage: fiboShift = Seqs([1,1], Sn**2-Sn-1); fiboShift
+        [1, 1, 2, 3, ..., 55, ...]
+        sage: fiboShift == fibo, fiboShift[0:9] == fibo[1:10]
+        (False, True)
+        sage: fiboAlt1 = Seqs({0:1,1:1,12:0}, Sn**2-Sn-1); fiboAlt1[12],fiboAlt1[0:12] == fibo[0:12]
+        (0, True)
+        sage: fiboAlt1[0:12], fibo[0:12]
+        sage: fiboAlt1[11:15]
+        [89, 0, 89, 89]
+        sage: fiboAlt2 = Seqs({0:1,1:1,12:0,18:0}, Sn**2-Sn-1); fiboAlt2[18], fiboAlt2[0:17] == fiboAlt1[0:17]
+        (0, True)
+
 
         sage: fibo + 1
         [1, 2, 2, 3, ..., 35, ...]
+        sage: eConsec = Seqs({1:1}, n*Sn-n-n1); Seqs
+        [1, 2, 3, ..., 10, ...]
+        sage: fibo + eConsec
+        [2, 3, 5, 7, ..., 65, ...]
+        sage: fibo - eConsec
+        [0, 1, 1, 1, ..., -45, ...]
         
     """
     Element = PRecursiveSequence
