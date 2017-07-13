@@ -19,9 +19,6 @@ import parent_p_recursive_sequences as ppseq
 from sage.rings.integer_ring import ZZ
 import ore_algebra
 
-# For tests
-import random
-
 # I hope the html is build automatically and the tables[4] is always the one of interest
 # TODO use tables[3] instead coz we need the index
 magicNumber = 4
@@ -71,8 +68,6 @@ def browsePages():
 def guess(seq):
     Seqs = ppseq.ParentPRecursiveSequences(ZZ['n'])
     
-    # if random.randint(1,5) == 1: # Simulation of guessing successful or not
-    #     return "Sn**2-Sn-1"
     for i in range(10,30):
         alg = Seqs.ore_algebra()
         if i > len(seq):
