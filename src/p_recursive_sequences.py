@@ -383,8 +383,8 @@ class PRecursiveSequence(RingElement):
     def _sub_ (self, other):
         _class = self.__class__
         # Compute new annihilator
-        sum_annihilator = self.annihilator().lclm(other.annihilator())
-        ord_ = sum_annihilator.order()
+        sub_annihilator = self.annihilator().lclm(other.annihilator())
+        ord_ = sub_annihilator.order()
         key_set = set()
         start = max(self.cond.keys()[0], other.cond.keys()[0])
         # ord_ first keys
@@ -398,14 +398,14 @@ class PRecursiveSequence(RingElement):
         for e in other.cond:
             if e > start:
                 key_set.add(e)
-        leadPol = sum_annihilator[ord_]
+        leadPol = sub_annihilator[ord_]
         roots = leadPol.roots(multiplicities=False)
         # roots
         for r in roots:
             r += ord_
             if r in ZZ and r > start:
                 key_set.add(r)
-        sum_cond = {}
+        sub_cond = {}
         for e in key_set:
             try:
                 left = self[e]
@@ -413,15 +413,16 @@ class PRecursiveSequence(RingElement):
                 sum_cond[e] = left-right
             except: # TODO handle exception (which type)
                 continue
-        return _class(self.parent(), sum_cond, sum_annihilator)
+        return _class(self.parent(), sub_cond, sub_annihilator)
             
     ###############################################################
 
     def _mul_ (self, other):
         _class = self.__class__
         # Compute new annihilator
-        sum_annihilator = self.annihilator().symmetric_product(other.annihilator())
-        ord_ = sum_annihilator.order()
+        mul_annihilator = self.annihilator().symmetric_product(other.annihilator())
+        mul_annihilator = self.parent().ore_algebra()(mul_annihilator)
+        ord_ = mul_annihilator.order()
         key_set = set()
         start = max(self.cond.keys()[0], other.cond.keys()[0])
         # ord_ first keys
@@ -435,22 +436,22 @@ class PRecursiveSequence(RingElement):
         for e in other.cond:
             if e > start:
                 key_set.add(e)
-        leadPol = sum_annihilator[ord_]
+        leadPol = mul_annihilator[ord_]
         roots = leadPol.roots(multiplicities=False)
         # roots
         for r in roots:
             r += ord_
             if r in ZZ and r > start:
                 key_set.add(r)
-        sum_cond = {}
+        mul_cond = {}
         for e in key_set:
             try:
                 left = self[e]
                 right = other[e]
-                sum_cond[e] = left*right
+                mul_cond[e] = left*right
             except: # TODO handle exception (which type)
                 continue
-        return _class(self.parent(), sum_cond, sum_annihilator)
+        return _class(self.parent(), mul_cond, mul_annihilator)
 
 
     def __nonzero__(self):
@@ -463,11 +464,13 @@ class PRecursiveSequence(RingElement):
     
     def _richcmp_ (self, other, op):
         if op == op_EQ or op == op_NE :
+            minSelf = min(self.cond)
+            minOther = min(other.cond)
             try : 
                 sub = self - other
             except TypeError :
                 return NotImplementedError
-            if sub.is_const() and sub[sub.cond.keys()[0]] == 0:
+            if minSelf == minOther and sub[sub.cond.keys()[0]] == 0 and sub.is_const():
                 return op == op_EQ
             else :
                 return op == op_NE
@@ -491,7 +494,7 @@ class PRecursiveSequence(RingElement):
                     return False
             return True
         min_ = min(self.cond)
-        cst = self - min_
+        cst = self - self.cond[min_]
         min_ = min(cst.cond)
         vals = cst.list(min_,min_+cst.order())
         for v in vals:

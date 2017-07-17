@@ -10,11 +10,14 @@
 
 from __future__ import print_function
 
+# Sage imports
 from sage.rings.ring import Ring
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.categories.rings import Rings
 from sage.structure.coerce import py_scalar_to_element
-#from sage.all import *
+from sage.functions.other import binomial
+
+# Personnal imports
 from ore_algebra import OreAlgebra, guess
 from p_recursive_sequences import PRecursiveSequence
 
@@ -33,32 +36,39 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         [True, True, True, True]
 
     TESTS::
+        # Parent creation, unit/zero
         sage: Seqs = ParentPRecursiveSequences(QQ['n']); Sn = Seqs.generator(); n = Seqs.base_ring().gen()
         sage: z1 = Seqs(); z1
         [0, 0, ..., 0, ...]
         sage: z2 = Seqs(0); z2
         [0, 0, ..., 0, ...]
-        sage: z1 == z2
-        True
+        sage: z1 == z2, z1.is_zero(), z2.is_zero(), z1.is_const(), z2.is_const()
+        (True, True, True, True, True)
         sage: Seqs(1), Seqs(1) == Seqs.one(), Seqs.one() == 1
         ([1, 1, ..., 1, ...], True, True)
+        sage: Seqs(1).is_one(), Seqs(1).is_const()
+        (True, True)
         sage: from random import randint
         sage: annihil = Seqs.ore_algebra().random_element(); ord_ = annihil.order()
         sage: uRnd = Seqs([randint(-20,20) for _ in range(ord_)], annihil)
         sage: (uRnd - uRnd).is_zero(), (uRnd - uRnd) == 0
         (True, True)
 
+        # Initialization from an element of Seqs.ore_algebra().base_ring()
         sage: Seqs(42), Seqs(42) == 42
         ([42, 42, 42, 42, ..., 42, ...], True)
         sage: u = Seqs(3*n**3 - n**2 + 5); u
-        ???
+        [5, 7, 25, 77, ..., 2111, ...]
         sage: (u[3], u[57], u[5:9])
-        ???
-        sage: u[5:2]
-        IndexError: ...
+        (77, 552335, [355, 617, 985, 1477])
+        sage: try:
+        ....:     u[5:2]
+        ....: except IndexError as e:
+        ....:     print(e)
+        Upper index must not be smaller than the lower index
         sage: u[-5]
-        IndexError: ...
 
+        # Extra conditions, getitem
         sage: fibo = Seqs([0,1], Sn**2 - Sn - 1); fibo
         [0, 1, 1, 2, 3, ..., 34, ...]
         sage: u = Seqs([1], Sn - 1); (u, u.is_one(), u == 1)
@@ -76,22 +86,22 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         [1, 1, 2, 3, ..., 55, ...]
         sage: fiboShift == fibo, fiboShift[0:9] == fibo[1:10]
         (False, True)
-        sage: fiboAlt1 = Seqs({0:1,1:1,12:0}, Sn**2-Sn-1); fiboAlt1[12],fiboAlt1[0:12] == fibo[0:12]
+        sage: fiboAlt1 = Seqs({0:0,1:1,12:0}, Sn**2-Sn-1); fiboAlt1[12],fiboAlt1[0:12] == fibo[0:12]
         (0, True)
-        sage: fiboAlt1[0:12], fibo[0:12]
         sage: fiboAlt1[11:15]
         [89, 0, 89, 89]
-        sage: fiboAlt2 = Seqs({0:1,1:1,12:0,18:0}, Sn**2-Sn-1); fiboAlt2[18], fiboAlt2[0:17] == fiboAlt1[0:17]
+        sage: fiboAlt2 = Seqs({0:0,1:1,12:0,18:0}, Sn**2-Sn-1); fiboAlt2[18], fiboAlt2[0:17] == fiboAlt1[0:17]
         (0, True)
 
 
+        # Operations
         sage: fibo + 1
         [1, 2, 2, 3, ..., 35, ...]
-        sage: eConsec = Seqs({1:1}, n*Sn-n-n1); Seqs
+        sage: eConsec = Seqs({1:1}, n*Sn-n-1); eConsec
         [1, 2, 3, ..., 10, ...]
         sage: fibo + eConsec
         [2, 3, 5, 7, ..., 65, ...]
-        sage: fibo - eConsec
+        sage: eConsec - fibo
         [0, 1, 1, 1, ..., -45, ...]
         
     """
@@ -174,12 +184,20 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
 
         # x is in base_ring()
         # TODO take into account cases where there are roots to the pol
-        # TODO lower boundary guessing --> `8` hard coded but ugly
+        # TODO boundary guessing --> `8` hard coded but ugly
         if x in self.base_ring() :
-            gen = self.base_ring().gen()
-            condInit = [x.subs({gen:0})]
-            annihil = -guess ([x.subs({gen:i}) for i in range(8)], self._ore_algebra)
-            return self.element_class (self, condInit, annihil)
+            if x in self.base_ring().base_ring():
+                # x is a constant
+                return self.element_class (self, [x], self.generator()-1)
+            # x is a polynomial
+            gen = self._generator
+            deg = x.degree()
+            n = self.base_ring().gen()
+            P = 0
+            for i in range(1,deg+1):
+                for j in range(i):
+                    P += x[i]*binomial(i,j)*n**j
+            return self.element_class (self, [x.subs(0), x.subs(1)], x*gen - x - P)
 
         # x is a constant of values_ring
         #   return with annihilator Sn - 1 (where Sn is replaced by actual generator)
