@@ -74,20 +74,24 @@ class PRecursiveSequence(RingElement):
             raise ValueError ("condInit must be a list or a dict.")
         if len(self.cond) == 0:
             self.cond = {0:0}
-
+        # Domain setup
         if nDomain is None:
-            self.nDomain = (min(self.cond),+Infinity)
+            self.nDomain = (min(self.cond),Infinity)
         else:
-            if nDomain == ZZ:
+            if nDomain == ZZ or nDomain == 'ZZ':
                 nDomain = (-Infinity, Infinity)
-            elif nDomain == NN:
+            elif nDomain == NN or nDomain == 'NN':
                 nDomain = (0, Infinity)
-            if not reduce(lambda x,y: x and (y in ZZ or y is Infinity or y is -Infinity), nDomain, True):
+            elif not reduce(lambda x,y: x and (y in ZZ or y is Infinity or y is -Infinity), nDomain, True):
                 raise ValueError("The domain boundaries must be in ZZ or +/- Infinity")
-            if not nDomain[0] < nDomain[1]:
+            if not nDomain[0] <= nDomain[1]:
                 raise ValueError("The domain [{},{}] is empty".format(*nDomain))
             self.nDomain = nDomain
-        
+        # Check that the indices are in the sequence's domain
+        for e in self.cond :
+            if e < nDomain[0] or e > nDomain[1]:
+                raise IndexError ("Indices must be in the sequence's domain")
+        # Annihilator setup
         self._annihilator = parent.ore_algebra().coerce(annihilator)
         if self.annihilator().parent() is not parent.ore_algebra():
             raise ValueError("`annihilator` must be in {}.".format(parent.ore_algebra()))
@@ -137,8 +141,9 @@ class PRecursiveSequence(RingElement):
 
         INPUT
         """
+        # TODO start at a given point
+        # TODO should start @ lowest point of domain
         def iterfct():
-            #i = min(self.cond)
             ord_ = self.order()
             cond = [(k,self.cond[k]) for k in sorted(self.cond)][:ord_]
             for k,v in cond:
@@ -232,8 +237,14 @@ class PRecursiveSequence(RingElement):
         """
         # Get start, stop and step params
         try :
-            start = slice_.start or min(self.cond.keys())
-            step = slice_.step or 1
+            if slice_.start is None:
+                start = min(self.cond)
+            else:
+                start = slice_.start
+            if slice_.step is None:
+                step = 1
+            else:
+                step = slice_.step
             stop = slice_.stop
         except AttributeError:
             start = slice_ 

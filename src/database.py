@@ -22,7 +22,7 @@ import ore_algebra
 # I hope the html is build automatically and the tables[4] is always the one of interest
 # TODO use tables[3] instead coz we need the index
 magicNumber = 4
-maxSeq = 201006
+maxSeq = 289480
 
 def getSequenceFromPage(url):
 
@@ -31,15 +31,15 @@ def getSequenceFromPage(url):
     sloaneSoup = BeautifulSoup(sloanePage, "lxml")
     # Find the right table
     tables = sloaneSoup.find_all("table")
-    table = tables[magicNumber]
+    # table = tables[magicNumber]
+    table = tables[3]
+    table = table.find_all("tt")[2:]
     # Remove whitespace and brackets
     pattern = re.compile(r'[^0-9,]')
-    string = re.sub(pattern, '', table.pre.string)
-    # Turn the string into an array
-    seq = string.split(",")
-    seq = map(lambda x:int(x),seq)
-
-    return seq
+    table = map(lambda x: int(re.sub(pattern,'',x.string)), table)
+    seq = {}
+    k,v = table[0::2], table[1::2]
+    return dict(zip(k,v))
 
 def browsePages():
     maxSeq = 200
@@ -83,6 +83,6 @@ def guess(seq):
     return None
 
 if __name__ == "__main__":
-    # getSequenceFromPage("https://oeis.org/A005206/list")
-    browsePages()
+    print (getSequenceFromPage("https://oeis.org/A005206/list"))
+    # browsePages()
     
