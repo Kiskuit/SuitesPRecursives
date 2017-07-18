@@ -103,10 +103,11 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         [2, 3, 5, 7, ..., 65, ...]
         sage: eConsec - fibo
         [0, 1, 1, 1, ..., -45, ...]
+        sage: eConsec * fibo
+        [1, 2, 6, 12, ..., 306, ...]
         
     """
     Element = PRecursiveSequence
-    # TODO generator as optional arg and if none : gen = 'S'+base.gen() ?
     def __init__(self, base_ring, generator=None, values_ring=None, category=None):
         r"""
         Initializes "self".
@@ -121,7 +122,6 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         if generator is None:
             generator = 'S' + str(base_ring.gen())
 
-        # TODO catch error, to raise mine
         self._ore_algebra, self._generator = OreAlgebra (base_ring, generator).objgen()
         Ring.__init__(self, base_ring, category=category or Rings())
 
@@ -184,7 +184,6 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
 
         # x is in base_ring()
         # TODO take into account cases where there are roots to the pol
-        # TODO boundary guessing --> `8` hard coded but ugly
         if x in self.base_ring() :
             if x in self.base_ring().base_ring():
                 # x is a constant
@@ -193,7 +192,9 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
             gen = self._generator
             deg = x.degree()
             n = self.base_ring().gen()
-            P = 0
+            P = 0 
+            # Proof of what follows : u(n) = P(n) => u(n+1) = P(n+1) <=> u(n+1) - u(n) - Q(n) = 0
+            #       <=> u(n)*u(n+1) - u(n)*u(n) - Q(n)*u(n) = 0 <=> [P(n)*Sn - P(n) - Q(n)]*u(n) = 0
             for i in range(1,deg+1):
                 for j in range(i):
                     P += x[i]*binomial(i,j)*n**j
@@ -236,21 +237,3 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
 
 
 
-###   if __name__ == "__main__":
-###       R = ZZ['n']
-###       par = ParentPRecursiveSequences (R,'Sn',RR)
-###       print ("-"*32)
-###       print (par)
-###       print ("-"*32)
-###       try:
-###           par = ParentPRecursiveSequences (R,'Sx',RR)
-###           print (par)
-###       except TypeError:
-###           print ("Sx is not a generator of the OreAlgebra over {}.".format(R))
-###       print ("-"*32)
-###       try:
-###           par = ParentPRecursiveSequences (ZZ, 'Sn', RR)
-###           print (par)
-###       except TypeError:
-###           print ("ZZ isnt a proper ring for OreAlgebra.")
-###       print ("-"*32)

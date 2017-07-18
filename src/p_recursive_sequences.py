@@ -24,7 +24,7 @@ from sage.rings.integer_ring import ZZ
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.rings.infinity import Infinity
 
-# TODO      * un constructeur (fonction séparée) qui fabrique une suite à partir d'une
+# TODO      * un constructeur qui fabrique une suite à partir d'une
 #           expression sage du genre factorial(n)*2^n + n,
 #           * un moyen de calculer des suites du style u(3*n+2) à partir de u(n)...
 
@@ -291,7 +291,6 @@ class PRecursiveSequence(RingElement):
         while extra_keys != [] and extra_keys[0] <= stop:
             key = extra_keys.pop(0)
             if key > start:
-                # TODO handle case where a key is in the order terms after start (using min(start,order) proly)
                 sta = prev
                 algo = 'to_list'
             else:
@@ -454,6 +453,7 @@ class PRecursiveSequence(RingElement):
         return _class(self.parent(), mul_cond, mul_annihilator)
 
 
+    @cached_method
     def __nonzero__(self):
         min_ = min(self.cond)
         if self.is_const() and self.cond[min_]==0:
