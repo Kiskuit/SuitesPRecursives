@@ -388,6 +388,14 @@ class PRecursiveSequence(RingElement):
                 continue
         return _class(self.parent(), sum_cond, sum_annihilator)
 
+    def add (self, other, method='default'):
+        if method == 'default':
+            return self + other
+        elif method == 'guess':
+            pass
+        else: # TODO
+            raise ValueError("method must either be `default` or `guess`")
+
     ###############################################################
 
     def _sub_ (self, other):
