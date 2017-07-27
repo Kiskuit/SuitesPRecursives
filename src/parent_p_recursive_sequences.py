@@ -103,7 +103,7 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         [2, 3, 5, 7, ..., 65, ...]
         sage: eConsec - fibo
         [0, 1, 1, 1, ..., -45, ...]
-        sage: eConsec * fibo
+        sage: eConsec * fibo # Note that the sequence starts at n=1 (because so does eConsec)
         [1, 2, 6, 12, ..., 306, ...]
         
     """
@@ -215,7 +215,7 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         and from anything that can be coerced into the values ring.
         The coercion creates constant sequences.
         """
-        if self.ore_algebra().base_ring().has_coerce_map_from (S):
+        if self._ore_algebra.base_ring().has_coerce_map_from (S):
             return True
         if self._values_ring.has_coerce_map_from (S):
             return True
@@ -232,6 +232,7 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         Allow guessing with elements that are not in the ore algebra.
         For instance, [1/2, 1/2, 1/2, 1/2, 1/2...] should give an answer, if the values ring includes 1/2.
         """
+        # TODO : allow guessing with index that does not start at 1
         annihil = -guess (vals, self._ore_algebra)
         return self.element_class (self, vals, annihil)
 

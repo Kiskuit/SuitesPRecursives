@@ -89,7 +89,7 @@ class PRecursiveSequence(RingElement):
             self.nDomain = nDomain
         # Check that the indices are in the sequence's domain
         for e in self.cond :
-            if e < nDomain[0] or e > nDomain[1]:
+            if e < self.nDomain[0] or e > self.nDomain[1]:
                 raise IndexError ("Indices must be in the sequence's domain")
         # Annihilator setup
         self._annihilator = parent.ore_algebra().coerce(annihilator)
