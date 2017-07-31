@@ -166,9 +166,9 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
 
 
         EXAMPLES::
-            sage: Seqs = ParentPRecursiveSequences(ZZ['n'])
-            sage: u = Seqs(1)
-            [1,1,1, ..., 1...]
+            sage: Seqs = ParentPRecursiveSequences(ZZ['n']); n = Seqs.base_ring().gen(); Sn = Seqs.generator()
+            sage: u = Seqs(1); u
+            [1, 1, 1, ..., 1, ...]
             sage: fibo = Seqs({0:1,1:1}, Sn^2-Sn-1)
             sage: fibo[0:15]
             [0, 1, 1, 2, ..., 233, 377]
@@ -208,6 +208,11 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         # Default case
         return self.element_class (self, x, **kwargs)
 
+    def _an_element_ (self):
+        r"Returns the fibonacci sequence as an example."
+        Sn = self._generator
+        return self.element_class (self, [0,1], Sn**2-Sn-1)
+
     def _coerce_map_from_ (self, S):
         r"""
         Defines the ensembles sage can coerce elements from.
@@ -215,6 +220,9 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         and from anything that can be coerced into the values ring.
         The coercion creates constant sequences.
         """
+        if isinstance(S, self.__class__):
+            if self._ore_algebra.base_ring().has_coerce_map_fromp(S._ore_algebra.base_ring()):
+                return True
         if self._ore_algebra.base_ring().has_coerce_map_from (S):
             return True
         if self._values_ring.has_coerce_map_from (S):

@@ -428,8 +428,8 @@ class PRecursiveSequence(RingElement):
             try:
                 left = self[e]
                 right = other[e]
-                sum_cond[e] = left-right
-            except: # TODO handle exception (which type)
+                sub_cond[e] = left-right
+            except Exception as e: # TODO handle exception (which type)
                 continue
         return _class(self.parent(), sub_cond, sub_annihilator)
             
