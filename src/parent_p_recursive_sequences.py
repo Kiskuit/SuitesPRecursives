@@ -107,6 +107,16 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         [0, 1, 1, 1, ..., -45, ...]
         sage: eConsec * fibo # Note that the sequence starts at n=1 (because so does eConsec)
         [1, 2, 6, 12, ..., 306, ...]
+
+        # Iterator
+        sage: res = []
+        sage: for e in fibo:
+        ...     if e > 100:
+        ...         print(res)
+        ...         break
+        ...     res.append(e)
+        [0, 1, 1, ..., 89]
+
         
     """
     Element = PRecursiveSequence

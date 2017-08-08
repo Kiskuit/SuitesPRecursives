@@ -35,6 +35,7 @@ class PRecursiveSequence(RingElement):
     The representation is defined by two parameters, the initial conditions, and recurrence operator (or annihilator).
 
     EXAMPLES::
+
         sage: from parent_p_recursive_sequences import *
         sage: P = ParentPRecursiveSequences(ZZ['n'])
         sage: n = P.base_ring().gen()
@@ -56,6 +57,7 @@ class PRecursiveSequence(RingElement):
         It requires that the order first conditions are consecutive.
 
         EXAMPLES::
+
             sage: from parent_p_recursive_sequences import *
             sage: P = ParentPRecursiveSequences(ZZ['n'])
             sage: n = P.base_ring().gen()
@@ -120,6 +122,7 @@ class PRecursiveSequence(RingElement):
         Returns the order of a sequence. The order of a sequence, is the order of its annihilator.
 
         EXAMPLES::
+
             sage: from parent_p_recursive_sequences import *
             sage: Seqs = ParentPRecursiveSequences(ZZ['n'])
             sage: n = Seqs.base_ring().gen()
@@ -172,11 +175,13 @@ class PRecursiveSequence(RingElement):
         Returns a list of the values taken by the sequence, in the range chosen by the user.
         
         INPUT::
+
         - ``args`` (len(args)==1) -- args[0] is the stoping index of the list (the list will start at its first element).
                    (len(args)==2) -- args[0] is the starting index of the list, and args[1] is the stoping index.
                    In both cases, it behaves like the 'range()' function, and last index will not be included.
         
         EXAMPLES::
+
             sage: from parent_p_recursive_sequences import *
             sage: Seqs = ParentPRecursiveSequences(QQ['n'])
             sage: Sn = Seqs.generator()
@@ -187,6 +192,7 @@ class PRecursiveSequence(RingElement):
             [5, 8, 13, 21]
 
         TODO::
+
         - Add opt arguments to chose algo and more
         """
         # TODO provide support for step?
@@ -221,13 +227,16 @@ class PRecursiveSequence(RingElement):
         Returns an (list of) element(s) of the sequence.
 
         INPUT::
+
         -``slice_`` if this parameter is an integer, it returns the element at index slice_ in the sequence.
                     if it is a Python slice, it returns a list of elements in the slice span
 
         EXAMPLES::
+
             TODO
 
         TODO::
+
         - Add support for step
         - if cond_init return straight away
         - change or as it does not work well with integer (0 or 1 --> 1)
@@ -270,6 +279,7 @@ class PRecursiveSequence(RingElement):
         Computes and returns the elements of the sequenece.
 
         INPUT::
+
         -``start`` starting index of the computation
         -``stop`` stoping index of the computation
         -``step`` only the first out of step elements is returned
@@ -503,7 +513,16 @@ class PRecursiveSequence(RingElement):
         r"""
         Returns True if the sequence is constant, False otherwise
 
+        EXAMPLE::
+
+            sage: import parent_p_recursive_sequences as par
+            sage: Seqs = par.ParentPRecursiveSequences(ZZ['n']);
+            sage: u,v = Seqs.an_element(), Seqs.zero()
+            sage: u.is_const(), v.is_const()
+            (False, True)
+
         TODO::
+
         - add possibility to test only from a given value upwards
         """
         # If order is 0, the sequence is 0 everywhere but the initial conditions
