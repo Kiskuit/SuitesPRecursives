@@ -27,6 +27,7 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
     and the same ring for the values.
 
     EXAMPLES::
+
         sage: from ore_algebra import *
         sage: Seqs = ParentPRecursiveSequences(ZZ['n'])
         sage: map(lambda x:Seqs.has_coerce_map_from(x), [ZZ,QQ,RR])
@@ -36,6 +37,7 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         [True, True, True, True]
 
     TESTS::
+
         # Parent creation, unit/zero
         sage: Seqs = ParentPRecursiveSequences(QQ['n']); Sn = Seqs.generator(); n = Seqs.base_ring().gen()
         sage: z1 = Seqs(); z1
@@ -166,10 +168,11 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
 
 
         EXAMPLES::
+
             sage: Seqs = ParentPRecursiveSequences(ZZ['n']); n = Seqs.base_ring().gen(); Sn = Seqs.generator()
             sage: u = Seqs(1); u
             [1, 1, 1, ..., 1, ...]
-            sage: fibo = Seqs({0:1,1:1}, Sn^2-Sn-1)
+            sage: fibo = Seqs({0:0,1:1}, Sn^2-Sn-1)
             sage: fibo[0:15]
             [0, 1, 1, 2, ..., 233, 377]
 
