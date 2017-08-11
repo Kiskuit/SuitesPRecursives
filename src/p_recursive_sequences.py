@@ -68,6 +68,9 @@ class PRecursiveSequence(RingElement):
             True
         """
 
+        # Setup sage
+        RingElement.__init__(self, parent)
+        # Parameters type checking
         if isinstance(condInit, dict):
             self.cond = condInit.copy()
         elif isinstance(condInit, list):
@@ -89,24 +92,29 @@ class PRecursiveSequence(RingElement):
             if not nDomain[0] <= nDomain[1]:
                 raise ValueError("The domain [{},{}] is empty".format(*nDomain))
             self.nDomain = nDomain
-        # Check that the indices are in the sequence's domain
-        for e in self.cond :
-            if e < self.nDomain[0] or e > self.nDomain[1]:
-                raise IndexError ("Indices must be in the sequence's domain")
+        if min(self.cond) < self.nDomain[0] or max(self.cond) > self.nDomain[1]:
+            raise IndexError ("Indices must be in the sequence's domain")
         # Annihilator setup
         self._annihilator = parent.ore_algebra().coerce(annihilator)
         if self.annihilator().parent() is not parent.ore_algebra():
             raise ValueError("`annihilator` must be in {}.".format(parent.ore_algebra()))
-        # Must have enough initial conditions
-        if len (self.cond) < self.annihilator().order() : 
+        ord_ = self.order()
+        # Initial conditions setup
+        if len (self.cond) < ord_ : 
             raise ValueError ("Not enough initial conditions.")
-        # order first initial conditions must be consecutive
-        elif self.annihilator().order() != 0:
+        elif ord_ > 1:
             keys = sorted(self.cond)
-            if keys[self.annihilator().order()-1] != keys[0] + self.annihilator().order()-1:
-                raise ValueError("{} first conditions must be consecutive.".format(self.annihilator().order()))
+            if keys[ord_-1] != keys[0] + ord_-1:
+                raise ValueError("{} first conditions must be consecutive.".format(ord_))
+        singular = self.singular_values()
+        for e in sorted(self.cond)[(ord_ or 1):]:
+            if e not in singular:
+                real_val = self[e]
+                if real_val != self.cond[e]:
+                    raise ValueError("You provided a wrong value for a non singular term.")
+                else:
+                    del self.cond[e]
 
-        RingElement.__init__(self, parent)
 
     ###############################################################
 
@@ -239,7 +247,6 @@ class PRecursiveSequence(RingElement):
 
         - Add support for step
         - if cond_init return straight away
-        - change or as it does not work well with integer (0 or 1 --> 1)
         - return list or element
         - check if start/stop < lowest index
 
@@ -263,8 +270,11 @@ class PRecursiveSequence(RingElement):
         if stop < start :
             raise IndexError("Upper index must not be smaller than the lower index")
 
-        if start in self.cond.keys() and start == stop-1:
-            return self.cond[start]
+        if start in self.singular_values()  and start == stop-1:
+            try:
+                return self.cond[start]
+            except KeyError:
+                raise ValueError("You must provide a value for this degenerate index")
 
         ret = self._condTakenIntoAccount(start, stop, step)
         if len(ret) == 1:
@@ -302,10 +312,10 @@ class PRecursiveSequence(RingElement):
         if stop in init_keys:
             # Enforce type of values via sequences
             try:
-                return Sequence([ini[k] for k in range(start,stop)], universe=self.parent().values_ring(), use_sage_types=True)
+                return Sequence([ini[k] for k in range(start,stop)],
+                             universe=self.parent().values_ring(), use_sage_types=True)
             except TypeError:
                 raise TypeError("Values are not in {}".format(str(self.parent().values_ring())))
-
         # Computation
         prev = min(start, max(init_keys))
         ret = Sequence([], universe=self.parent().values_ring(), use_sage_types=True)
@@ -317,9 +327,13 @@ class PRecursiveSequence(RingElement):
             else:
                 sta = key-ord_ + 1
             cond_vals = self._computeElements (cond, sta, key+1, algorithm=algo)
-            # If it exists, replace values by user's initial conditions
-            if ini[key] is not None:
+            # If it is a singular value, and its value is set
+            if key in singular and ini[key] is not None:
                 cond_vals[-1] = ini[key]
+            # If it is not, check if the value provided by user is correct
+            ###   elif key not in singular and key != stop:
+            ###       if ini[key] != cond_vals[-1]:
+            ###           raise ValueError("You provided a wrong value for a term that is not singular")
             cond = {i : cond_vals[i-sta] for i in range(sta,key+1)}
             prev = key
             if key > start:
@@ -418,6 +432,7 @@ class PRecursiveSequence(RingElement):
         # ord_ first keys
         for e in range(start, start + ord_):
             key_set.add(e)
+        print (key_set)
         # extra init cond from self
         for e in self.cond:
             if e > start:
@@ -435,12 +450,13 @@ class PRecursiveSequence(RingElement):
                 key_set.add(r)
         sub_cond = {}
         for e in key_set:
-            try:
-                left = self[e]
-                right = other[e]
-                sub_cond[e] = left-right
-            except Exception as e: # TODO handle exception (which type)
-                continue
+            #try:
+            left = self[e]
+            right = other[e]
+            sub_cond[e] = left-right
+            #except Exception as e: # TODO handle exception (which type)
+            #    print ("Major fuck up!")
+            #    continue
         return _class(self.parent(), sub_cond, sub_annihilator)
             
     ###############################################################
@@ -481,6 +497,7 @@ class PRecursiveSequence(RingElement):
                 continue
         return _class(self.parent(), mul_cond, mul_annihilator)
 
+    ###############################################################
 
     @cached_method
     def __nonzero__(self):
@@ -488,6 +505,19 @@ class PRecursiveSequence(RingElement):
         if self.is_const() and self.cond[min_]==0:
             return False
         return True
+
+    ###############################################################
+
+    @cached_method
+    def singular_values (self):
+        ord_ = self.order()
+        pol = self._annihilator[ord_]
+        roots = pol.roots(multiplicities=False)
+        res = []
+        for r in roots:
+            if r in ZZ and r > min(self.cond):
+                res.append(r+ord_)
+        return res
 
     ###############################################################
     
@@ -543,7 +573,10 @@ class PRecursiveSequence(RingElement):
     ###############################################################
 
     def _repr_(self):
-        vals = self.list()
+        try:
+            vals = self.list()
+        except ValueError:
+            return "This sequence contains a singuar value"
         str_ = "["
         for v in vals:
             str_ += str(v) + ", "
