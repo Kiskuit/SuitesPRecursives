@@ -88,12 +88,11 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         [1, 1, 2, 3, ..., 55, ...]
         sage: fiboShift == fibo, fiboShift[0:9] == fibo[1:10]
         (False, True)
-        sage: fiboAlt1 = Seqs({0:0,1:1,12:0}, Sn**2-Sn-1); fiboAlt1[12],fiboAlt1[0:12] == fibo[0:12]
-        (0, True)
-        sage: fiboAlt1[11:15]
-        [89, 0, 89, 89]
-        sage: fiboAlt2 = Seqs({0:0,1:1,12:0,18:0}, Sn**2-Sn-1); fiboAlt2[18], fiboAlt2[0:17] == fiboAlt1[0:17]
-        (0, True)
+        sage: try:
+        ....:     fiboAlt = Seqs({0:0,1:1,12:0}, Sn**2-Sn-1)
+        ....: except ValueError as e:
+        ....:     print (e)
+        You provided a wrong value for a non singular term.
 
 
         # Operations

@@ -302,6 +302,7 @@ class PRecursiveSequence(RingElement):
         """
         # Setup
         ini = self.cond.copy()
+        singular = self.singular_values()
         ord_ = self.order() or 1 # To avoid problems with 0-order sequences
         if start not in ini:
             ini[start] = None
@@ -387,14 +388,14 @@ class PRecursiveSequence(RingElement):
         # ord_ first keys
         for e in range(start, start + ord_):
             key_set.add(e)
-        # extra init cond from self
-        for e in self.cond:
-            if e > start:
-                key_set.add(e)
-        # extra init cond from other
-        for e in other.cond:
-            if e > start:
-                key_set.add(e)
+        ###   # extra init cond from self
+        ###   for e in self.cond:
+        ###       if e > start:
+        ###           key_set.add(e)
+        ###   # extra init cond from other
+        ###   for e in other.cond:
+        ###       if e > start:
+        ###           key_set.add(e)
         leadPol = sum_annihilator[ord_]
         roots = leadPol.roots(multiplicities=False)
         # roots
@@ -432,7 +433,6 @@ class PRecursiveSequence(RingElement):
         # ord_ first keys
         for e in range(start, start + ord_):
             key_set.add(e)
-        print (key_set)
         # extra init cond from self
         for e in self.cond:
             if e > start:
@@ -515,7 +515,7 @@ class PRecursiveSequence(RingElement):
         roots = pol.roots(multiplicities=False)
         res = []
         for r in roots:
-            if r in ZZ and r > min(self.cond):
+            if r in ZZ and r+ord_ > min(self.cond):
                 res.append(r+ord_)
         return res
 
