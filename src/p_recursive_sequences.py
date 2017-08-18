@@ -376,6 +376,28 @@ class PRecursiveSequence(RingElement):
         return ret
 
     ###############################################################
+    def _operation(self, other, op_terms, op_annihil):
+        _class = self.__class__
+        new_annihilator = self.annihilator().op_annihil(other.annihilator())
+        ord_ = new_annihilator.order()
+        key_set = set()
+        start = max(self.cond.keys()[0], other.cond.keys()[0])
+        # ord_ first keys
+        for e  in range(start, start + ord_):
+            key_set.add(e)
+        leadPol = new_annihilator[ord_]
+        roots = leadPol.roots(multiplicities=False)
+        # roots
+        for r in roots:
+            r+= ord_
+            if r in ZZ and r > start:
+                key_set.add(r)
+        sum_cond = {}
+        for e in key_set:
+            try:
+                left = self[e]
+                right = other[e]
+                sum_cond[e] = op_terms(left,right)
 
 
     def _add_ (self, other):
@@ -388,14 +410,6 @@ class PRecursiveSequence(RingElement):
         # ord_ first keys
         for e in range(start, start + ord_):
             key_set.add(e)
-        ###   # extra init cond from self
-        ###   for e in self.cond:
-        ###       if e > start:
-        ###           key_set.add(e)
-        ###   # extra init cond from other
-        ###   for e in other.cond:
-        ###       if e > start:
-        ###           key_set.add(e)
         leadPol = sum_annihilator[ord_]
         roots = leadPol.roots(multiplicities=False)
         # roots
