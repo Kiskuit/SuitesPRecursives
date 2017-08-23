@@ -101,4 +101,7 @@ ENV/
 *.snm
 *.vrb
 *.bbl
-*.blg
+*.blgo
+
+# Huge file
+db/seq.txt
