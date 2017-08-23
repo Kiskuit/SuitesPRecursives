@@ -23,14 +23,14 @@ from p_recursive_sequences import PRecursiveSequence
 
 class ParentPRecursiveSequences (Ring, UniqueRepresentation):
     r"""
-    Ensemble of P recursive sequences which share the same ring for the coefficient,
+    Set of P recursive sequences which share the same ring for the coefficient,
     and the same ring for the values.
 
     EXAMPLES::
 
         sage: from ore_algebra import *
         sage: Seqs = ParentPRecursiveSequences(ZZ['n'])
-        sage: map(lambda x:Seqs.has_coerce_map_from(x), [ZZ,QQ,RR])
+        sage: [Seqs.has_coerce_map_from(x) for x in [ZZ,QQ,RR]]
         [True, False, False]
         sage: Seqs = ParentPRecursiveSequences(QQ['n'], values_ring=CC)
         sage: map(lambda x:Seqs.has_coerce_map_from(x), [ZZ,QQ,RR,CC])
@@ -233,7 +233,7 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         The coercion creates constant sequences.
         """
         if isinstance(S, self.__class__):
-            if self._ore_algebra.base_ring().has_coerce_map_fromp(S._ore_algebra.base_ring()):
+            if self._ore_algebra.base_ring().has_coerce_map_from(S._ore_algebra.base_ring()):
                 return True
         if self._ore_algebra.base_ring().has_coerce_map_from (S):
             return True
