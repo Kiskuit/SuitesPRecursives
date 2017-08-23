@@ -376,9 +376,12 @@ class PRecursiveSequence(RingElement):
         return ret
 
     ###############################################################
+
     def _operation(self, other, op_terms, op_annihil):
         _class = self.__class__
-        new_annihilator = self.annihilator().op_annihil(other.annihilator())
+        #new_annihilator = self.annihilator().op_annihil(other.annihilator())
+        new_annihilator = op_annihil(other.annihilator())
+        new_annihilator = self.parent().ore_algebra()(new_annihilator)
         ord_ = new_annihilator.order()
         key_set = set()
         start = max(self.cond.keys()[0], other.cond.keys()[0])
@@ -392,40 +395,21 @@ class PRecursiveSequence(RingElement):
             r+= ord_
             if r in ZZ and r > start:
                 key_set.add(r)
-        sum_cond = {}
+        new_cond = {}
         for e in key_set:
             try:
                 left = self[e]
                 right = other[e]
-                sum_cond[e] = op_terms(left,right)
-
-
-    def _add_ (self, other):
-        _class = self.__class__
-        # Compute new annihilator
-        sum_annihilator = self.annihilator().lclm(other.annihilator())
-        ord_ = sum_annihilator.order()
-        key_set = set()
-        start = max(self.cond.keys()[0], other.cond.keys()[0])
-        # ord_ first keys
-        for e in range(start, start + ord_):
-            key_set.add(e)
-        leadPol = sum_annihilator[ord_]
-        roots = leadPol.roots(multiplicities=False)
-        # roots
-        for r in roots:
-            r += ord_
-            if r in ZZ and r > start:
-                key_set.add(r)
-        sum_cond = {}
-        for e in key_set:
-            try:
-                left = self[e]
-                right = other[e]
-                sum_cond[e] = left+right
+                new_cond[e] = op_terms(left,right)
             except: # TODO handle exception (which type)
                 continue
-        return _class(self.parent(), sum_cond, sum_annihilator)
+        return _class(self.parent(), new_cond, new_annihilator)
+
+    ###############################################################
+
+    def _add_ (self, other):
+        op = self.annihilator().lclm
+        return self._operation(other, lambda x,y : x+y, op)
 
     def add (self, other, method='default'):
         if method == 'default':
@@ -438,78 +422,14 @@ class PRecursiveSequence(RingElement):
     ###############################################################
 
     def _sub_ (self, other):
-        _class = self.__class__
-        # Compute new annihilator
-        sub_annihilator = self.annihilator().lclm(other.annihilator())
-        ord_ = sub_annihilator.order()
-        key_set = set()
-        start = max(self.cond.keys()[0], other.cond.keys()[0])
-        # ord_ first keys
-        for e in range(start, start + ord_):
-            key_set.add(e)
-        # extra init cond from self
-        for e in self.cond:
-            if e > start:
-                key_set.add(e)
-        # extra init cond from other
-        for e in other.cond:
-            if e > start:
-                key_set.add(e)
-        leadPol = sub_annihilator[ord_]
-        roots = leadPol.roots(multiplicities=False)
-        # roots
-        for r in roots:
-            r += ord_
-            if r in ZZ and r > start:
-                key_set.add(r)
-        sub_cond = {}
-        for e in key_set:
-            #try:
-            left = self[e]
-            right = other[e]
-            sub_cond[e] = left-right
-            #except Exception as e: # TODO handle exception (which type)
-            #    print ("Major fuck up!")
-            #    continue
-        return _class(self.parent(), sub_cond, sub_annihilator)
+        op = self.annihilator().lclm
+        return self._operation(other, lambda x,y : x-y, op)
             
     ###############################################################
 
     def _mul_ (self, other):
-        _class = self.__class__
-        # Compute new annihilator
-        mul_annihilator = self.annihilator().symmetric_product(other.annihilator())
-        mul_annihilator = self.parent().ore_algebra()(mul_annihilator)
-        ord_ = mul_annihilator.order()
-        key_set = set()
-        start = max(self.cond.keys()[0], other.cond.keys()[0])
-        # ord_ first keys
-        for e in range(start, start + ord_):
-            key_set.add(e)
-        # extra init cond from self
-        for e in self.cond:
-            if e > start:
-                key_set.add(e)
-        # extra init cond from other
-        for e in other.cond:
-            if e > start:
-                key_set.add(e)
-        leadPol = mul_annihilator[ord_]
-        roots = leadPol.roots(multiplicities=False)
-        # roots
-        for r in roots:
-            r += ord_
-            if r in ZZ and r > start:
-                key_set.add(r)
-        mul_cond = {}
-        for e in key_set:
-            try:
-                left = self[e]
-                right = other[e]
-                mul_cond[e] = left*right
-            except: # TODO handle exception (which type)
-                continue
-        return _class(self.parent(), mul_cond, mul_annihilator)
+        op = self.annihilator().symmetric_product
+        return self._operation(other, lambda x,y : x*y, op)
 
     ###############################################################
 
