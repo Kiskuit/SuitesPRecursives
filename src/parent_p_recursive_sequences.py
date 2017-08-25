@@ -50,6 +50,7 @@ class PRecursiveSequences (Ring, UniqueRepresentation):
         ([1, 1, ..., 1, ...], True, True)
         sage: Seqs(1).is_one(), Seqs(1).is_const()
         (True, True)
+        sage: set_random_seed()
         sage: from random import randint
         sage: annihil = Seqs.ore_algebra().random_element(); ord_ = annihil.order()
         sage: uRnd = Seqs([randint(-20,20) for _ in range(ord_)], annihil)
@@ -63,11 +64,10 @@ class PRecursiveSequences (Ring, UniqueRepresentation):
         [5, 7, 25, 77, ..., 2111, ...]
         sage: (u[3], u[57], u[5:9])
         (77, 552335, [355, 617, 985, 1477])
-        sage: try:
-        ....:     u[5:2]
-        ....: except IndexError as e:
-        ....:     print(e)
-        Upper index must not be smaller than the lower index
+        sage: u[5:2]
+        Traceback (most recent call last):
+        ...
+        IndexError: Upper index must not be smaller than the lower index
         sage: u[-5]
 
         # Extra conditions, getitem
@@ -88,11 +88,10 @@ class PRecursiveSequences (Ring, UniqueRepresentation):
         [1, 1, 2, 3, ..., 55, ...]
         sage: fiboShift == fibo, fiboShift[0:9] == fibo[1:10]
         (False, True)
-        sage: try:
-        ....:     fiboAlt = Seqs({0:0,1:1,12:0}, Sn**2-Sn-1)
-        ....: except ValueError as e:
-        ....:     print (e)
-        You provided a wrong value for a non singular term.
+        sage: fiboAlt = Seqs({0:0,1:1,12:0}, Sn**2-Sn-1)
+        Traceback (most recent call last):
+        ...
+        ValueError: You provided a wrong value for a non singular term.
 
 
         # Operations
@@ -125,7 +124,7 @@ class PRecursiveSequences (Ring, UniqueRepresentation):
         """
         # Default values_ring
         if values_ring is None:
-            values_ring = base_ring.base_ring()
+            values_ring = base_ring.base_ring().fraction_field()
         elif not base_ring.base_ring().is_subring(values_ring):
             raise ValueError("`base_ring` must be a part of `values_ring`")
         self._values_ring = values_ring

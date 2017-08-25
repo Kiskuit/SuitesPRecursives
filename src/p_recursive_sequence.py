@@ -13,8 +13,6 @@
 # General imports
 from __future__ import print_function
 
-# from sage.all import *
-# from ore_algebra import *
 # Sage imports
 from sage.structure.element import RingElement
 from sage.structure.sequence import Sequence
@@ -23,6 +21,7 @@ from sage.misc.cachefunc import cached_method
 from sage.rings.integer_ring import ZZ
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.rings.infinity import Infinity
+from sage.modules.free_module_element import vector
 
 # TODO      * un constructeur qui fabrique une suite à partir d'une
 #           expression sage du genre factorial(n)*2^n + n,
@@ -497,6 +496,9 @@ class PRecursiveSequence(RingElement):
         for v in vals:
             str_ += str(v) + ", "
         str_ += "...]"
+        min_ = min(self.cond.keys())
+        if min_ != 0:
+            str_ += " (starting at n={})".format(min_)
         return str_
 
     ###############################################################
