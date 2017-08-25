@@ -19,27 +19,27 @@ from sage.functions.other import binomial
 
 # Personnal imports
 from ore_algebra import OreAlgebra, guess
-from p_recursive_sequences import PRecursiveSequence
+from p_recursive_sequence import PRecursiveSequence
 
-class ParentPRecursiveSequences (Ring, UniqueRepresentation):
+class PRecursiveSequences (Ring, UniqueRepresentation):
     r"""
-    Ensemble of P recursive sequences which share the same ring for the coefficient,
+    Set of P recursive sequences which share the same ring for the coefficient,
     and the same ring for the values.
 
     EXAMPLES::
 
         sage: from ore_algebra import *
-        sage: Seqs = ParentPRecursiveSequences(ZZ['n'])
-        sage: map(lambda x:Seqs.has_coerce_map_from(x), [ZZ,QQ,RR])
+        sage: Seqs = PRecursiveSequences(ZZ['n'])
+        sage: [Seqs.has_coerce_map_from(x) for x in [ZZ,QQ,RR]]
         [True, False, False]
-        sage: Seqs = ParentPRecursiveSequences(QQ['n'], values_ring=CC)
+        sage: Seqs = PRecursiveSequences(QQ['n'], values_ring=CC)
         sage: map(lambda x:Seqs.has_coerce_map_from(x), [ZZ,QQ,RR,CC])
         [True, True, True, True]
 
     TESTS::
 
         # Parent creation, unit/zero
-        sage: Seqs = ParentPRecursiveSequences(QQ['n']); Sn = Seqs.generator(); n = Seqs.base_ring().gen()
+        sage: Seqs = PRecursiveSequences(QQ['n']); Sn = Seqs.shift_operator(); n = Seqs.base_ring().gen()
         sage: z1 = Seqs(); z1
         [0, 0, ..., 0, ...]
         sage: z2 = Seqs(0); z2
@@ -119,9 +119,9 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         
     """
     Element = PRecursiveSequence
-    def __init__(self, base_ring, generator=None, values_ring=None, category=None):
+    def __init__(self, base_ring, shift_operator=None, values_ring=None, category=None):
         r"""
-        Initializes "self".
+        Initialize "self".
         """
         # Default values_ring
         if values_ring is None:
@@ -129,56 +129,64 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         elif not base_ring.base_ring().is_subring(values_ring):
             raise ValueError("`base_ring` must be a part of `values_ring`")
         self._values_ring = values_ring
-        # Default generator
-        if generator is None:
-            generator = 'S' + str(base_ring.gen())
+        # Default shift_operator
+        if shift_operator is None:
+            shift_operator = 'S' + str(base_ring.gen())
 
-        self._ore_algebra, self._generator = OreAlgebra (base_ring, generator).objgen()
+        self._ore_algebra, self._shift_operator = OreAlgebra (base_ring, shift_operator).objgen()
         Ring.__init__(self, base_ring, category=category or Rings())
 
     def values_ring(self):
         r"""
-        Returns the ring of the values.
+        Return the ring of the values.
         """
         return self._values_ring
 
     def ore_algebra(self):
         r"""
-        Returns the ore algebra in which the annihilator of the sequences are.
+        Return the ore algebra to which the annihilator of the sequences belongs.
         """
         return self._ore_algebra
 
-    def generator(self):
+    def shift_operator(self):
         r"""
-        Returns the generator of the ore algebra of the sequences.
-        Since we work with P recursive sequences, the generators are Standard shift operators (Sn, Sx...).
-        """
-        return self._generator
+        Return the shift_operator of the ore algebra of the sequences.
 
-    def base_ring(self):
+        Since we work with P recursive sequences, the shift_operators are Standard shift operators (Sn, Sx...).
+        """
+        return self._shift_operator
+
+    def _base_ring(self):
         r"""
-        Returns the (polynomial) ring  of the sequences.
+        Return the (polynomial) ring  of the sequences.
         """
         return self.ore_algebra().base_ring()
 
+    def variable(self):
+        r"""
+        Return the variable of the sequence
+        """
+        return self._base_ring().gen()
+
     def _repr_(self):
         r"""
-        Returns the representation of this object.
+        Return the representation of this object.
         """
-        ret = "P-Recursive sequences over `{}`, with values in `{}`".format(self.base_ring(),
+        ret = "P-Recursive sequences over `{}`, with values in `{}`".format(self._base_ring(),
                                                                             self.values_ring())
         return ret
 
     def _element_constructor_(self, *args, **kwargs):
         r"""
-        Constructs and returns a P recusive sequences.
+        Construct and returns a P recusive sequences.
+
         If a single argument is given, it tries to interpret it as a sequence (see EXAMPLES).
         Otherwise, it works as the constructor of the element, without the need to provide the parent.
 
 
         EXAMPLES::
 
-            sage: Seqs = ParentPRecursiveSequences(ZZ['n']); n = Seqs.base_ring().gen(); Sn = Seqs.generator()
+            sage: Seqs = PRecursiveSequences(ZZ['n']); n = Seqs.base_ring().gen(); Sn = Seqs.shift_operator()
             sage: u = Seqs(1); u
             [1, 1, 1, ..., 1, ...]
             sage: fibo = Seqs({0:0,1:1}, Sn^2-Sn-1)
@@ -194,16 +202,17 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
         except AttributeError :
             return self.element_class (self, x, **kwargs)
 
+        # x is a constant of values_ring
+        #   return with annihilator Sn - 1 (where Sn is replaced by actual shift_operator)
+        if x in self._values_ring :
+            return self.element_class (self, {0:x}, self._ore_algebra.gen() - 1)
         # x is in base_ring()
         # TODO take into account cases where there are roots to the pol
-        if x in self.base_ring() :
-            if x in self.base_ring().base_ring():
-                # x is a constant
-                return self.element_class (self, [x], self.generator()-1)
+        if x in self._base_ring() :
             # x is a polynomial
-            gen = self._generator
+            gen = self._shift_operator
             deg = x.degree()
-            n = self.base_ring().gen()
+            n = self._base_ring().gen()
             P = 0 
             # Proof of what follows : u(n) = P(n) => u(n+1) = P(n+1) <=> u(n+1) - u(n) - Q(n) = 0
             #       <=> u(n)*u(n+1) - u(n)*u(n) - Q(n)*u(n) = 0 <=> [P(n)*Sn - P(n) - Q(n)]*u(n) = 0
@@ -212,28 +221,25 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
                     P += x[i]*binomial(i,j)*n**j
             return self.element_class (self, [x.subs(0), x.subs(1)], x*gen - x - P)
 
-        # x is a constant of values_ring
-        #   return with annihilator Sn - 1 (where Sn is replaced by actual generator)
-        if x in self._values_ring :
-            return self.element_class (self, {0:x}, self._ore_algebra.gen() - 1)
 
         # Default case
         return self.element_class (self, x, **kwargs)
 
     def _an_element_ (self):
-        r"Returns the fibonacci sequence as an example."
-        Sn = self._generator
+        r"Return the Fibonacci sequence as an example."
+        Sn = self._shift_operator
         return self.element_class (self, [0,1], Sn**2-Sn-1)
 
     def _coerce_map_from_ (self, S):
         r"""
-        Defines the ensembles sage can coerce elements from.
-        Coercions exist anuthing that can be coerced into the base ring of the underlying ore algebra,
+        Define the parent ssage can coerce elements from.
+        
+        Coercions exist from anything that can be coerced into the base ring of the underlying ore algebra,
         and from anything that can be coerced into the values ring.
         The coercion creates constant sequences.
         """
         if isinstance(S, self.__class__):
-            if self._ore_algebra.base_ring().has_coerce_map_fromp(S._ore_algebra.base_ring()):
+            if self._ore_algebra.base_ring().has_coerce_map_from(S._ore_algebra.base_ring()):
                 return True
         if self._ore_algebra.base_ring().has_coerce_map_from (S):
             return True
@@ -245,7 +251,8 @@ class ParentPRecursiveSequences (Ring, UniqueRepresentation):
 
     def guess (self, vals) :
         r"""
-        Tries to guess the recurrence of the given list, in the context of "self.ore_algebra()".
+        Try to guess the recurrence of the given list, in the context of "self.ore_algebra()".
+
         /!\ It uses the `guess` function from ore_algebra, which is currently broken in some cases.
         
         TODO:
