@@ -83,11 +83,11 @@ class PRecursiveSequence(RingElement):
         if nDomain is None:
             self.nDomain = (min(self.cond),Infinity)
         else:
-            if nDomain == ZZ or nDomain == 'ZZ':
+            if nDomain is ZZ or nDomain == 'ZZ':
                 nDomain = (-Infinity, Infinity)
-            elif nDomain == NN or nDomain == 'NN':
+            elif nDomain is NN or nDomain == 'NN':
                 nDomain = (0, Infinity)
-            elif not reduce(lambda x,y: x and (y in ZZ or y is Infinity or y is -Infinity), nDomain, True):
+            elif not all([x in ZZ or x is Infinity or x is -Infinity for x in nDomain])
                 raise ValueError("The domain boundaries must be in ZZ or +/- Infinity")
             if not nDomain[0] <= nDomain[1]:
                 raise ValueError("The domain [{},{}] is empty".format(*nDomain))
@@ -96,8 +96,6 @@ class PRecursiveSequence(RingElement):
             raise IndexError ("Indices must be in the sequence's domain")
         # Annihilator setup
         self._annihilator = parent.ore_algebra().coerce(annihilator)
-        if self.annihilator().parent() is not parent.ore_algebra():
-            raise ValueError("`annihilator` must be in {}.".format(parent.ore_algebra()))
         ord_ = self.order()
         # Initial conditions setup
         if len (self.cond) < ord_ : 
@@ -106,7 +104,7 @@ class PRecursiveSequence(RingElement):
             keys = sorted(self.cond)
             if keys[ord_-1] != keys[0] + ord_-1:
                 raise ValueError("{} first conditions must be consecutive.".format(ord_))
-        singular = self.singular_values()
+        singular = self.singular_indices()
         for e in sorted(self.cond)[(ord_ or 1):]:
             if e not in singular:
                 real_val = self[e]
@@ -148,7 +146,7 @@ class PRecursiveSequence(RingElement):
 
     def __iter__(self):
         r"""
-        Iterates infinitely over the sequences values (or until a degenerate values)
+        Iterates indefinitely over the sequence's values (or until a degenerate value appears)
 
         INPUT
         """
@@ -182,7 +180,7 @@ class PRecursiveSequence(RingElement):
         r"""
         Returns a list of the values taken by the sequence, in the range chosen by the user.
         
-        INPUT::
+        INPUT:
 
         - ``args`` (len(args)==1) -- args[0] is the stoping index of the list (the list will start at its first element).
                    (len(args)==2) -- args[0] is the starting index of the list, and args[1] is the stoping index.
@@ -219,7 +217,7 @@ class PRecursiveSequence(RingElement):
             raise TypeError("Too many arguments for list")
         # start/stop cannot be lower than lowest index
         if stop < lowest or start < lowest :
-            err_str = "Index out of bond, indices cannot be lower than "
+            err_str = "Index out of bounds, indices cannot be lower than "
             err_str += str(lowest) + "."
             raise IndexError(err_str)
         ret = self[start:stop]
@@ -270,7 +268,7 @@ class PRecursiveSequence(RingElement):
         if stop < start :
             raise IndexError("Upper index must not be smaller than the lower index")
 
-        if start in self.singular_values()  and start == stop-1:
+        if start in self.singular_indices()  and start == stop-1:
             try:
                 return self.cond[start]
             except KeyError:
@@ -291,18 +289,18 @@ class PRecursiveSequence(RingElement):
         INPUT::
 
         -``start`` starting index of the computation
-        -``stop`` stoping index of the computation
+        -``stop`` stopping index of the computation
         -``step`` only the first out of step elements is returned
         -``algo`` the algorithm used to compute the values, if it is 'auto' (default),
         the function automatically determines which of the two following algo it uses.
         If it is 'to_list', it will reccursively coputes all elements.
         If it is 'bsplit', it will use a binary splitting method
-        This option is mostly used for debugging purpose, as it is usually better to let
+        This option is mostly used for debugging purposes, as it is usually better to let
         the function decide which algo should be used.
         """
         # Setup
         ini = self.cond.copy()
-        singular = self.singular_values()
+        singular = self.singular_indices()
         ord_ = self.order() or 1 # To avoid problems with 0-order sequences
         if start not in ini:
             ini[start] = None
@@ -443,7 +441,7 @@ class PRecursiveSequence(RingElement):
     ###############################################################
 
     @cached_method
-    def singular_values (self):
+    def singular_indices (self):
         ord_ = self.order()
         pol = self._annihilator[ord_]
         roots = pol.roots(multiplicities=False)
@@ -462,7 +460,7 @@ class PRecursiveSequence(RingElement):
             try : 
                 sub = self - other
             except TypeError :
-                return NotImplementedError
+                raise NotImplementedError
             if minSelf == minOther and sub[sub.cond.keys()[0]] == 0 and sub.is_const():
                 return op == op_EQ
             else :
