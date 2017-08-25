@@ -37,9 +37,9 @@ class PRecursiveSequence(RingElement):
     EXAMPLES::
 
         sage: from parent_p_recursive_sequences import *
-        sage: P = ParentPRecursiveSequences(ZZ['n'])
+        sage: P = PRecursiveSequences(ZZ['n'])
         sage: n = P.base_ring().gen()
-        sage: Sn = P.generator()
+        sage: Sn = P.shift_operator()
         sage: fibo = PRecursiveSequence (P, [0,1], Sn**2-Sn-1)
         sage: fibo[8] == sloane.A000045[8], fibo[8]
         (True, 21)
@@ -50,7 +50,7 @@ class PRecursiveSequence(RingElement):
 
     _binary_splitting_threshold = 100
 
-    def __init__ (self, parent, condInit, annihilator, nDomain=None):
+    def __init__ (self, parent, condInit, annihilator):
         r"""
         Initializes a sequence. The initial conditions can be a list or a dictionary.
         If it is a list, it is assumed that the indices start at 0, and are consecutive.
@@ -59,9 +59,9 @@ class PRecursiveSequence(RingElement):
         EXAMPLES::
 
             sage: from parent_p_recursive_sequences import *
-            sage: P = ParentPRecursiveSequences(ZZ['n'])
+            sage: P = PRecursiveSequences(ZZ['n'])
             sage: n = P.base_ring().gen()
-            sage: Sn = P.generator()
+            sage: Sn = P.shift_operator()
             sage: fibo1 = PRecursiveSequence(P, [0,1], Sn**2 - Sn - 1)
             sage: fibo2 = PRecursiveSequence(P, {0:0,1:1}, Sn**2 - Sn -1)
             sage: fibo1 == fibo2
@@ -79,21 +79,6 @@ class PRecursiveSequence(RingElement):
             raise ValueError ("condInit must be a list or a dict.")
         if len(self.cond) == 0:
             self.cond = {0:0}
-        # Domain setup
-        if nDomain is None:
-            self.nDomain = (min(self.cond),Infinity)
-        else:
-            if nDomain is ZZ or nDomain == 'ZZ':
-                nDomain = (-Infinity, Infinity)
-            elif nDomain is NN or nDomain == 'NN':
-                nDomain = (0, Infinity)
-            elif not all([x in ZZ or x is Infinity or x is -Infinity for x in nDomain])
-                raise ValueError("The domain boundaries must be in ZZ or +/- Infinity")
-            if not nDomain[0] <= nDomain[1]:
-                raise ValueError("The domain [{},{}] is empty".format(*nDomain))
-            self.nDomain = nDomain
-        if min(self.cond) < self.nDomain[0] or max(self.cond) > self.nDomain[1]:
-            raise IndexError ("Indices must be in the sequence's domain")
         # Annihilator setup
         self._annihilator = parent.ore_algebra().coerce(annihilator)
         ord_ = self.order()
@@ -130,9 +115,9 @@ class PRecursiveSequence(RingElement):
         EXAMPLES::
 
             sage: from parent_p_recursive_sequences import *
-            sage: Seqs = ParentPRecursiveSequences(ZZ['n'])
+            sage: Seqs = PRecursiveSequences(ZZ['n'])
             sage: n = Seqs.base_ring().gen()
-            sage: Sn = Seqs.generator()
+            sage: Sn = Seqs.shift_operator()
             sage: fibo = Seqs([0,1], Sn^2-Sn-1)
             sage: fibo.order()
             2
@@ -151,7 +136,6 @@ class PRecursiveSequence(RingElement):
         INPUT
         """
         # TODO start at a given point
-        # TODO should start @ lowest point of domain
         def iterfct():
             ord_ = self.order()
             cond = [(k,self.cond[k]) for k in sorted(self.cond)][:ord_]
@@ -189,8 +173,8 @@ class PRecursiveSequence(RingElement):
         EXAMPLES::
 
             sage: from parent_p_recursive_sequences import *
-            sage: Seqs = ParentPRecursiveSequences(QQ['n'])
-            sage: Sn = Seqs.generator()
+            sage: Seqs = PRecursiveSequences(QQ['n'])
+            sage: Sn = Seqs.shift_operator()
             sage: fibo = Seqs([0,1], Sn^2-Sn-1)
             sage: fibo.list(7)
             [0, 1, ..., 8]
@@ -478,7 +462,7 @@ class PRecursiveSequence(RingElement):
         EXAMPLE::
 
             sage: import parent_p_recursive_sequences as par
-            sage: Seqs = par.ParentPRecursiveSequences(ZZ['n']);
+            sage: Seqs = par.PRecursiveSequences(ZZ['n']);
             sage: u,v = Seqs.an_element(), Seqs.zero()
             sage: u.is_const(), v.is_const()
             (False, True)
@@ -521,9 +505,9 @@ class PRecursiveSequence(RingElement):
 
 if __name__ == "__main__" :
     #from sage.all import *
-    from parent_p_recursive_sequences import ParentPRecursiveSequences
-    Seqs = ParentPRecursiveSequences(ZZ['n'])
-    Sn = Seqs.generator()
+    from parent_p_recursive_sequences import PRecursiveSequences
+    Seqs = PRecursiveSequences(ZZ['n'])
+    Sn = Seqs.shift_operator()
     u = PRecursiveSequence (Seqs, [], 1)
     u.is_zero()
 ###       cond3 = [1]

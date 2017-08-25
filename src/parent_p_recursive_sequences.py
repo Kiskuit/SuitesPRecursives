@@ -19,7 +19,7 @@ from sage.functions.other import binomial
 
 # Personnal imports
 from ore_algebra import OreAlgebra, guess
-from p_recursive_sequences import PRecursiveSequence
+from p_recursive_sequence import PRecursiveSequence
 
 class PRecursiveSequences (Ring, UniqueRepresentation):
     r"""
