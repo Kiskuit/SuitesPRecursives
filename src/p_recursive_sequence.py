@@ -472,7 +472,7 @@ class PRecursiveSequence(RingElement):
         """
         # If order is 0, the sequence is 0 everywhere but the initial conditions
         if self.order() == 0:
-            for _,v in self.cond.iteritems():
+            for v in self.cond.values():
                 if v != 0:
                     return False
             return True
@@ -480,7 +480,7 @@ class PRecursiveSequence(RingElement):
         cst = self - self.cond[min_]
         min_ = min(cst.cond)
         vals = cst.list(min_,min_+cst.order())
-        for v in vals:
+        for v in vals + cst.cond.values():
             if v != 0:
                 return False
         return True

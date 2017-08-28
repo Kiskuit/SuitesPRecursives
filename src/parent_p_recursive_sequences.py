@@ -31,7 +31,7 @@ class PRecursiveSequences (Ring, UniqueRepresentation):
         sage: from ore_algebra import *
         sage: Seqs = PRecursiveSequences(ZZ['n'])
         sage: [Seqs.has_coerce_map_from(x) for x in [ZZ,QQ,RR]]
-        [True, False, False]
+        [True, True, False]
         sage: Seqs = PRecursiveSequences(QQ['n'], values_ring=CC)
         sage: map(lambda x:Seqs.has_coerce_map_from(x), [ZZ,QQ,RR,CC])
         [True, True, True, True]
@@ -79,9 +79,9 @@ class PRecursiveSequences (Ring, UniqueRepresentation):
         sage: v1 == v2, v1 == v3, v2 == v3
         (True, False, False)
         sage: v1,v2,v3
-        ([2, 0, 0, 0, ..., 0, ...], [2, 0, 0, 0, ..., 0, ...], [2, 2, 4, ..., 725760, ...])
+        ([2, 0, 0, 0, ..., 0, ...], [2, 0, 0, 0, ..., 0, ...], [2, 2, 4, ..., 725760, ...] (starting at n=1))
         sage: fibo2 = Seqs({1:1,2:1}, Sn**2-Sn-1); fibo2
-        [1, 1, 2, 3, ..., 55, ...]
+        [1, 1, 2, 3, ..., 55, ...] (starting at n=1)
         sage: fibo == fibo2, fibo[1:9] == fibo2[1:9]
         (False, True)
         sage: fiboShift = Seqs([1,1], Sn**2-Sn-1); fiboShift
@@ -98,13 +98,13 @@ class PRecursiveSequences (Ring, UniqueRepresentation):
         sage: fibo + 1
         [1, 2, 2, 3, ..., 35, ...]
         sage: eConsec = Seqs({1:1}, n*Sn-n-1); eConsec
-        [1, 2, 3, ..., 10, ...]
+        [1, 2, 3, ..., 10, ...] (starting at n=1)
         sage: fibo + eConsec
-        [2, 3, 5, 7, ..., 65, ...]
+        [2, 3, 5, 7, ..., 65, ...] (starting at n=1)
         sage: eConsec - fibo
-        [0, 1, 1, 1, ..., -45, ...]
+        [0, 1, 1, 1, ..., -45, ...] (starting at n=1)
         sage: eConsec * fibo # Note that the sequence starts at n=1 (because so does eConsec)
-        [1, 2, 6, 12, ..., 306, ...]
+        [1, 2, 6, 12, ..., 306, ...] (starting at n=1)
 
         # Iterator
         sage: res = []
@@ -185,7 +185,7 @@ class PRecursiveSequences (Ring, UniqueRepresentation):
 
         EXAMPLES::
 
-            sage: Seqs = PRecursiveSequences(ZZ['n']); n = Seqs.base_ring().gen(); Sn = Seqs.shift_operator()
+            sage: Seqs = PRecursiveSequences(ZZ['n']); n = Seqs.shift_operator(); Sn = Seqs.shift_operator()
             sage: u = Seqs(1); u
             [1, 1, 1, ..., 1, ...]
             sage: fibo = Seqs({0:0,1:1}, Sn^2-Sn-1)
@@ -204,21 +204,19 @@ class PRecursiveSequences (Ring, UniqueRepresentation):
         # x is a constant of values_ring
         #   return with annihilator Sn - 1 (where Sn is replaced by actual shift_operator)
         if x in self._values_ring :
-            return self.element_class (self, {0:x}, self._ore_algebra.gen() - 1)
+            return self.element_class (self, {0:x}, self._shift_operator - 1)
         # x is in base_ring()
         # TODO take into account cases where there are roots to the pol
         if x in self._base_ring() :
             # x is a polynomial
-            gen = self._shift_operator
+            shift = self._shift_operator
             deg = x.degree()
-            n = self._base_ring().gen()
+            n = self.variable()
             P = 0 
-            # Proof of what follows : u(n) = P(n) => u(n+1) = P(n+1) <=> u(n+1) - u(n) - Q(n) = 0
-            #       <=> u(n)*u(n+1) - u(n)*u(n) - Q(n)*u(n) = 0 <=> [P(n)*Sn - P(n) - Q(n)]*u(n) = 0
             for i in range(1,deg+1):
                 for j in range(i):
                     P += x[i]*binomial(i,j)*n**j
-            return self.element_class (self, [x.subs(0), x.subs(1)], x*gen - x - P)
+            return self.element_class (self, [x.subs(0), x.subs(1)], x*shift - x - P)
 
 
         # Default case
@@ -231,7 +229,7 @@ class PRecursiveSequences (Ring, UniqueRepresentation):
 
     def _coerce_map_from_ (self, S):
         r"""
-        Define the parent ssage can coerce elements from.
+        Define the parent sage can coerce elements from.
         
         Coercions exist from anything that can be coerced into the base ring of the underlying ore algebra,
         and from anything that can be coerced into the values ring.
